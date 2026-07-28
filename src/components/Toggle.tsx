@@ -1,14 +1,14 @@
+import { useEffect } from 'react';
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
-  useDerivedValue,
+  useSharedValue,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 
 import AppPressable from '@/components/AppPressable';
-import { colors, durations, radii, shadows, springs } from '@/theme/tokens';
+import { colors, radii, shadows, springs } from '@/theme/tokens';
 
 /** 46x27 track, 23px knob, 2px inset — so the knob travels 46-23-4 = 19px. */
 const TRACK_WIDTH = 46;
@@ -36,20 +36,21 @@ export default function Toggle({
   style,
   accessibilityLabel,
 }: ToggleProps) {
-  const progress = useDerivedValue(
-    () => withSpring(value ? 1 : 0, springs.toggle),
-    [value],
-  );
+  const progress = useSharedValue(value ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withSpring(value ? 1 : 0, springs.toggle);
+  }, [value, progress]);
 
   const trackStyle = useAnimatedStyle(() => ({
     // The track colour cross-fades linearly (design: `background 0.28s ease`)
     // while the knob springs, so the overshoot doesn't tint the track.
     backgroundColor: interpolateColor(
-      withTiming(value ? 1 : 0, { duration: durations.spring }),
+      progress.value,
       [0, 1],
       [colors.toggleOff, colors.ink],
     ),
-  }), [value]);
+  }));
 
   const knobStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: progress.value * TRAVEL }],
