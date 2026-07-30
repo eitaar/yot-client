@@ -142,6 +142,23 @@ export interface ListEventsQuery {
   offset?: number;
 }
 
+/** POST /api/ask request body. */
+export interface AskRequest {
+  query: string;
+  context?: string;
+}
+
+/** POST /api/ask response body. */
+export interface AskResponse {
+  answer: string;
+  model: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
 /**
  * `PATCH /api/events/{id}` body. Every field is optional; the nullable ones
  * are *cleared* by sending an explicit `null` (§3.4 UpdateEvent). Omitting a

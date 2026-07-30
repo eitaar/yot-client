@@ -16,6 +16,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { ask } from '@/api/client';
 import type { AppEvent } from '@/api/types';
 import AppPressable from '@/components/AppPressable';
 import { SendIcon } from '@/components/icons';
@@ -112,7 +113,7 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
     tick();
   };
 
-  const send = () => {
+  const send = async () => {
     const q = query.trim();
     if (!q) return;
 
@@ -121,14 +122,29 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
     setResult(null);
     setStreamed('');
 
-    timers.current.push(
-      setTimeout(() => {
-        const next = answer(q, events, new Date(), { timeFormat });
-        setLoading(false);
-        setResult(next);
-        stream(next.text);
-      }, THINK_MIN_MS + Math.random() * THINK_JITTER_MS),
-    );
+    try {
+      // Call the API
+      const response = await ask(q);
+      setLoading(false);
+      const result: AskState = {
+        text: response.answer,
+        actions: [],
+        previewEventIds: [],
+      };
+      setResult(result);
+      stream(response.answer);
+    } catch (error) {
+      // Fallback to local engine
+      const next = answer(q, events, new Date(), { timeFormat });
+      setLoading(false);
+      const fallbackResult: AskState = {
+        text: next.text + '\n\n（offline mode）',
+        actions: next.actions,
+        previewEventIds: next.previewEventIds,
+      };
+      setResult(fallbackResult);
+      stream(fallbackResult.text);
+    }
   };
 
   const clear = () => {
