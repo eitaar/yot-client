@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import Animated, {
@@ -16,6 +17,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { ask, listAskModels } from '@/api/client';
 import type { AppEvent } from '@/api/types';
 import AppPressable from '@/components/AppPressable';
 import { SendIcon } from '@/components/icons';
@@ -75,6 +77,9 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AskState | null>(null);
   const [streamed, setStreamed] = useState('');
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const clearTimers = () => {
@@ -82,6 +87,18 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
     timers.current = [];
   };
   useEffect(() => clearTimers, []);
+
+  // Fetch available AI models on mount
+  useEffect(() => {
+    listAskModels()
+      .then((res) => {
+        setAvailableModels(res.models);
+        setSelectedModel(res.default);
+      })
+      .catch(() => {
+        // Silently fail - model selection is optional
+      });
+  }, []);
 
   // v15 rotated the ambient insight off the wall clock; one seed per mount
   // keeps it from changing under the user mid-read.
@@ -112,7 +129,7 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
     tick();
   };
 
-  const send = () => {
+  const send = async () => {
     const q = query.trim();
     if (!q) return;
 
@@ -121,14 +138,29 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
     setResult(null);
     setStreamed('');
 
-    timers.current.push(
-      setTimeout(() => {
-        const next = answer(q, events, new Date(), { timeFormat });
-        setLoading(false);
-        setResult(next);
-        stream(next.text);
-      }, THINK_MIN_MS + Math.random() * THINK_JITTER_MS),
-    );
+    try {
+      // Call the API
+      const response = await ask(q, selectedModel);
+      setLoading(false);
+      const result: AskState = {
+        text: response.answer,
+        actions: [],
+        previewEventIds: [],
+      };
+      setResult(result);
+      stream(response.answer);
+    } catch (error) {
+      // Fallback to local engine
+      const next = answer(q, events, new Date(), { timeFormat });
+      setLoading(false);
+      const fallbackResult: AskState = {
+        text: next.text + '\n\n（offline mode）',
+        actions: next.actions,
+        previewEventIds: next.previewEventIds,
+      };
+      setResult(fallbackResult);
+      stream(fallbackResult.text);
+    }
   };
 
   const clear = () => {
@@ -229,6 +261,43 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
           </View>
         ) : null}
       </ScrollView>
+
+      {availableModels.length > 1 && (
+        <View style={styles.modelPickerContainer}>
+          <TouchableOpacity
+            style={styles.modelPickerButton}
+            onPress={() => setModelPickerOpen(!modelPickerOpen)}
+            testID="ask-model-picker"
+          >
+            <Text style={styles.modelPickerLabel}>Model</Text>
+            <Text style={styles.modelPickerValue} numberOfLines={1}>
+              {selectedModel || 'Select model'}
+            </Text>
+            <Text style={styles.modelPickerArrow}>{modelPickerOpen ? '▲' : '▼'}</Text>
+          </TouchableOpacity>
+
+          {modelPickerOpen && (
+            <View style={styles.modelPickerDropdown}>
+              {availableModels.map((model) => (
+                <TouchableOpacity
+                  key={model}
+                  style={[
+                    styles.modelPickerOption,
+                    model === selectedModel && styles.modelPickerOptionSelected,
+                  ]}
+                  onPress={() => {
+                    setSelectedModel(model);
+                    setModelPickerOpen(false);
+                  }}
+                  testID={`ask-model-option-${model}`}
+                >
+                  <Text style={styles.modelPickerOptionText}>{model}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={styles.bar}>
         <View style={styles.barInner}>
@@ -399,5 +468,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+  },
+
+  modelPickerContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 2,
+    flexShrink: 0,
+  },
+  modelPickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.hairline,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  modelPickerLabel: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.muted,
+  },
+  modelPickerValue: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.body,
+    flex: 1,
+  },
+  modelPickerArrow: {
+    fontSize: 9,
+    color: colors.muted,
+  },
+  modelPickerDropdown: {
+    marginTop: 4,
+    backgroundColor: colors.hairline,
+    borderRadius: 8,
+    paddingVertical: 4,
+    maxHeight: 160,
+  },
+  modelPickerOption: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  modelPickerOptionSelected: {
+    backgroundColor: colors.faint + '20',
+  },
+  modelPickerOptionText: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: colors.body,
   },
 });

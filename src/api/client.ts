@@ -11,6 +11,8 @@
 import {
   type ApiErrorCode,
   type ApiErrorEnvelope,
+  type AskRequest,
+  type AskResponse,
   type Calendar,
   type EventPatch,
   type ListEventsQuery,
@@ -543,6 +545,42 @@ export async function updateEvent(id: string, patch: EventPatch): Promise<YotEve
 /** 204 on success; a missing event is a 404 `ApiError`. */
 export async function deleteEvent(id: string): Promise<void> {
   await authed<void>(`/events/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+/* --------------------------------------------------------------- ask (AI) */
+
+/**
+ * POST /api/ask. Sends a natural-language query to the yot-server, which
+ * proxies to Hermes API Server. The server handles all calendar context via
+ * yot MCP tools.
+ *
+ * Timeout is generous (120s) because the backend may invoke multiple MCP
+ * tools before responding.
+ */
+export async function ask(
+  query: string,
+  context?: string,
+  model?: string,
+): Promise<AskResponse> {
+  const body: AskRequest = { query };
+  if (context) body.context = context;
+  if (model) body.model = model;
+  return expectRecord<AskResponse>(
+    await authed<unknown>('/ask', { method: 'POST', body, timeoutMs: 120_000 }),
+  );
+}
+
+/** Response shape for GET /api/ask/models. */
+export interface AskModelsResponse {
+  models: string[];
+  default: string;
+}
+
+/** GET /api/ask/models. Returns the server's allowed model list. */
+export async function listAskModels(): Promise<AskModelsResponse> {
+  return expectRecord<AskModelsResponse>(
+    await authed<unknown>('/ask/models', { method: 'GET' }),
+  );
 }
 
 /* -------------------------------------------------------------- images/misc */
