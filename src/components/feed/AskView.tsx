@@ -197,7 +197,7 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
             <Text style={styles.modelChipText} numberOfLines={1}>
               {selectedModel || 'Select model'}
             </Text>
-            <Text style={styles.modelChipChevron}>{modelPickerOpen ? '⌃' : '⌄'}</Text>
+            <Text style={styles.modelChipChevron}>{modelPickerOpen ? '>' : 'V'}</Text>
           </TouchableOpacity>
           {modelPickerOpen ? (
             <View style={styles.modelDropdown}>
@@ -488,30 +488,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 18,
-    backgroundColor: colors.hairline,
   },
   modelChipText: {
     maxWidth: 220,
-    fontSize: 13,
-    fontFamily: fonts.medium,
+    fontSize: 18,
+    fontFamily: fonts.bold,
+    lineHeight: 22,
     color: colors.body,
   },
   modelChipChevron: {
     marginLeft: 7,
     fontSize: 15,
     lineHeight: 15,
-    color: colors.muted,
+    color: colors.ink,
   },
   modelDropdown: {
+    position: 'absolute',
     minWidth: 210,
-    marginTop: 6,
+    marginTop: 40,
     paddingVertical: 5,
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000000',
     shadowOpacity: 0.12,
     shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
     elevation: 5,
   },
   modelOption: {
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   },
   modelOptionText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 15,
     fontFamily: fonts.regular,
     color: colors.body,
   },
