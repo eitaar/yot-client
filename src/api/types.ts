@@ -146,6 +146,7 @@ export interface ListEventsQuery {
 export interface AskRequest {
   query: string;
   context?: string;
+  model?: string;
 }
 
 /** POST /api/ask response body. */
