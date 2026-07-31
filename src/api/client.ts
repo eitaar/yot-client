@@ -293,9 +293,9 @@ async function authedStream(
     throw error;
   }
 
-  const timeoutMs = 120_000;
+  // Streaming requests may spend an unbounded amount of time in Hermes MCP
+  // tools before the first token. Do not impose a client-side deadline.
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
     response = await currentFetch()(`${session.baseUrl}/api${path}`, {
@@ -321,7 +321,6 @@ async function authedStream(
   }
 
   if (!response.ok) {
-    clearTimeout(timer);
     const error = errorFromBody(response.status, await readBody(response));
     if (error.status === 401) onUnauthorized?.();
     throw error;
@@ -356,7 +355,8 @@ async function authedStream(
     }
     if (buffer) consume(buffer);
   } finally {
-    clearTimeout(timer);
+    // Release the reader when the stream ends; there is intentionally no timer.
+    reader.releaseLock();
   }
 }
 
@@ -634,8 +634,8 @@ export async function deleteEvent(id: string): Promise<void> {
  * proxies to Hermes API Server. The server handles all calendar context via
  * yot MCP tools.
  *
- * Timeout is generous (120s) because the backend may invoke multiple MCP
- * tools before responding.
+ * The streaming variant below has no client-side deadline because Hermes may
+ * spend an unbounded amount of time invoking MCP tools before its first token.
  */
 export async function ask(
   query: string,
