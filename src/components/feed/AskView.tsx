@@ -17,7 +17,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { ask, listAskModels } from '@/api/client';
+import { askStream, listAskModels } from '@/api/client';
 import type { AppEvent } from '@/api/types';
 import AppPressable from '@/components/AppPressable';
 import { SendIcon } from '@/components/icons';
@@ -82,6 +82,7 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const requestId = useRef(0);
   const clearTimers = () => {
     for (const t of timers.current) clearTimeout(t);
     timers.current = [];
@@ -134,13 +135,18 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
     if (!q) return;
 
     clearTimers();
+    const thisRequest = ++requestId.current;
     setLoading(true);
-    setResult(null);
+    setResult({ text: '', actions: [], previewEventIds: [] });
     setStreamed('');
 
     try {
-      // Call the API
-      const response = await ask(q, undefined, selectedModel);
+      const response = await askStream(q, undefined, selectedModel, (text) => {
+        if (thisRequest !== requestId.current) return;
+        setLoading(false);
+        setStreamed((current) => current + text);
+      });
+      if (thisRequest !== requestId.current) return;
       setLoading(false);
       const result: AskState = {
         text: response.answer,
@@ -148,8 +154,8 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
         previewEventIds: [],
       };
       setResult(result);
-      stream(response.answer);
     } catch (error) {
+      if (thisRequest !== requestId.current) return;
       // Fallback to local engine
       const next = answer(q, events, new Date(), { timeFormat });
       setLoading(false);

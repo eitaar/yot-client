@@ -280,6 +280,86 @@ async function authed<T>(path: string, options: RequestOptions = {}): Promise<T>
   return requestAt<T>(session.baseUrl, path, { ...options, key: session.key });
 }
 
+/** Authenticated streaming request used by endpoints that return SSE. */
+async function authedStream(
+  path: string,
+  body: unknown,
+  onEvent: (event: Record<string, unknown>) => void,
+): Promise<void> {
+  const session = await loadSession();
+  if (!session) {
+    const error = new ApiError('unauthorized', 'Not paired with a server', 401);
+    onUnauthorized?.();
+    throw error;
+  }
+
+  const timeoutMs = 120_000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let response: Response;
+  try {
+    response = await currentFetch()(`${session.baseUrl}/api${path}`, {
+      method: 'POST',
+      headers: {
+        accept: 'text/event-stream',
+        'content-type': 'application/json',
+        authorization: 'Bearer ' + session.key,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (cause) {
+    throw new ApiError(
+      controller.signal.aborted ? 'timeout' : 'network_error',
+      controller.signal.aborted
+        ? `Request timed out after ${timeoutMs}ms`
+        : cause instanceof Error && cause.message
+          ? cause.message
+          : 'Network request failed',
+      0,
+    );
+  }
+
+  if (!response.ok) {
+    clearTimeout(timer);
+    const error = errorFromBody(response.status, await readBody(response));
+    if (error.status === 401) onUnauthorized?.();
+    throw error;
+  }
+  if (!response.body) throw new ApiError('http_error', 'Streaming response has no body', 200);
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  const consume = (line: string) => {
+    if (!line.startsWith('data:')) return;
+    const data = line.slice(5).trim();
+    if (!data || data === '[DONE]') return;
+    try {
+      const event = JSON.parse(data) as unknown;
+      if (typeof event === 'object' && event !== null && !Array.isArray(event)) {
+        onEvent(event as Record<string, unknown>);
+      }
+    } catch {
+      throw new ApiError('http_error', 'Invalid streaming response', 200);
+    }
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done });
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() ?? '';
+      for (const line of lines) consume(line);
+      if (done) break;
+    }
+    if (buffer) consume(buffer);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /* ------------------------------------------------------------ health & pair */
 
 export type ProbeResult =
@@ -568,6 +648,44 @@ export async function ask(
   return expectRecord<AskResponse>(
     await authed<unknown>('/ask', { method: 'POST', body, timeoutMs: 120_000 }),
   );
+}
+
+/** POST /api/ask as Server-Sent Events, delivering each text delta immediately. */
+export async function askStream(
+  query: string,
+  context: string | undefined,
+  model: string | undefined,
+  onText: (text: string) => void,
+): Promise<AskResponse> {
+  const body: AskRequest = { query };
+  if (context) body.context = context;
+  if (model) body.model = model;
+
+  let answer = '';
+  let finalResponse: AskResponse | undefined;
+  await authedStream('/ask', body, (event) => {
+    if (event.type === 'delta' && typeof event.text === 'string') {
+      answer += event.text;
+      onText(event.text);
+    } else if (event.type === 'done') {
+      const response = (event.response ?? event) as Partial<AskResponse>;
+      if (typeof response.answer === 'string') answer = response.answer;
+      if (typeof response.model === 'string') {
+        finalResponse = { ...response, answer } as AskResponse;
+      }
+    } else if (event.type === 'error') {
+      throw new ApiError(
+        'http_error',
+        typeof event.message === 'string' ? event.message : 'Streaming request failed',
+        200,
+      );
+    }
+  });
+
+  if (!finalResponse) {
+    throw new ApiError('http_error', 'Streaming response ended before completion', 200);
+  }
+  return finalResponse;
 }
 
 /** Response shape for GET /api/ask/models. */
