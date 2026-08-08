@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Platform,
   ScrollView,
@@ -106,6 +106,15 @@ export default function PullToSync({
   const scrollRef = useAnimatedRef<ScrollView>();
   const containerRef = useRef<View | null>(null);
 
+  /**
+   * Whether the scrollable is at (or above) the top. The pan gesture is only
+   * enabled then: mid-list it must never compete with the ScrollView for the
+   * scroll-up drag. Without this gate the pan — which activates on any
+   * 10px+ downward drag, i.e. exactly the scroll-up gesture — steals the
+   * gesture and the list cannot scroll up.
+   */
+  const [atTop, setAtTop] = useState(true);
+
   /** Live pull distance in px — the indicator height while dragging. */
   const pull = useSharedValue(0);
   /** Rendered indicator height; animated separately so it can ease home. */
@@ -190,9 +199,11 @@ export default function PullToSync({
   const pan = useMemo(
     () =>
       Gesture.Pan()
-        // Only downward drags activate, so upward scrolling is never contested.
+        // Mid-list the pan is disabled outright, so the ScrollView always
+        // wins the scroll-up drag. Only at the top — where a downward drag
+        // means "pull" rather than "scroll up" — does the pan claim it.
         .activeOffsetY(10)
-        .enabled(enabled)
+        .enabled(enabled && atTop)
         .onBegin(() => {
           dragBase.value = 0;
         })
@@ -228,12 +239,14 @@ export default function PullToSync({
         .onFinalize(() => {
           if (phase.value === 'dragging') springBack();
         })
-        // RNGH types this as a ref to a component *type*; an animated ref to a
-        // ScrollView instance is exactly what it wants at runtime.
+        // NOTE: this resolves to a no-op — RNGH's convertToHandlerTag maps a
+        // plain ScrollView ref to -1 (no handlerTag) and silently drops it.
+        // The atTop gate above is what actually keeps the pan off the scroll;
+        // this call is kept because it is harmless and documents intent.
         .simultaneousWithExternalGesture(
           scrollRef as unknown as React.RefObject<React.ComponentType<object>>,
         ),
-    [dragBase, enabled, height, opacity, phase, pull, scrollRef, scrollY, springBack, trigger],
+    [atTop, dragBase, enabled, height, opacity, phase, pull, scrollRef, scrollY, springBack, trigger],
   );
 
   /* ------------------------------------------------------- web wheel path */
@@ -312,7 +325,11 @@ export default function PullToSync({
 
   const onScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      scrollY.value = e.nativeEvent.contentOffset.y;
+      const y = e.nativeEvent.contentOffset.y;
+      scrollY.value = y;
+      // Gate the pan on the top-of-list test. Same-value setState bails out,
+      // so this only re-renders when the list actually crosses the top edge.
+      setAtTop((prev) => (prev === (y <= 0) ? prev : y <= 0));
     },
     [scrollY],
   );

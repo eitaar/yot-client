@@ -76,9 +76,11 @@ revocation on disconnect.
 
 Known gaps, in rough priority order:
 
-- **Not yet run on a physical device.** Verification so far is web-only. In
-  particular, the pull-to-sync gesture registers its child scroll view in a way
-  that is a no-op on native, so scrolling needs a device pass before trusting it.
+- **Not yet run on a physical device.** Verification so far is web-only. The
+  pull-to-sync pan previously stole scroll-up drags from the ScrollView (its
+  `simultaneousWithExternalGesture` registration resolves to a no-op — RNGH
+  drops refs without a `handlerTag`); the pan is now gated on the top-of-list
+  position, but scrolling still deserves a device pass.
 - On iOS the number-pad keyboard can cover the PIN screen's confirm button.
 - Failed saves and deletes roll back silently — there is no error surface yet,
   and delete navigates back even when it failed.
