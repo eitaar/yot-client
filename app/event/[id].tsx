@@ -19,7 +19,7 @@ import TextField from '@/components/TextField';
 import { BackChevronIcon } from '@/components/icons';
 import { fmtTimeRange } from '@/lib/dates';
 import { useEvents } from '@/store/events';
-import { useTimeFormat } from '@/store/settings';
+import { useEffectiveTimeZone, useTimeFormat } from '@/store/settings';
 import { colors, durations, easing, fonts, radii, type } from '@/theme/tokens';
 
 /**
@@ -73,6 +73,7 @@ export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const timeFormat = useTimeFormat();
+  const timeZone = useEffectiveTimeZone();
 
   const event = useEvents((s) => (id ? s.eventsById[id] : undefined));
   const calendar = useEvents((s) => (event ? s.calendarsById[event.calendarId] : undefined));
@@ -108,6 +109,8 @@ export default function EventDetailScreen() {
     event.start,
     event.end,
     timeFormat,
+    undefined,
+    timeZone,
   )}`;
 
   return (
@@ -143,7 +146,7 @@ export default function EventDetailScreen() {
         <View style={styles.meta}>
           <MetaRow label="Calendar" value={calendar?.name ?? 'Calendar'} />
           {event.location ? <MetaRow label="Location" value={event.location} /> : null}
-          <MetaRow label="Duration" value={fmtTimeRange(event.start, event.end, timeFormat)} last />
+          <MetaRow label="Duration" value={fmtTimeRange(event.start, event.end, timeFormat, undefined, timeZone)} last />
         </View>
       </ScrollView>
 

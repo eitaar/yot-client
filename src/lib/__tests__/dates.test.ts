@@ -56,6 +56,47 @@ describe('fmtTimeRange', () => {
   });
 });
 
+describe('fmtClock — manual timezone', () => {
+  // Explicit UTC instants, so the expected zoned output is independent of the
+  // machine's local zone (the suite must pass under any TZ).
+  const atUtc = (h: number, m = 0) => new Date(Date.UTC(2026, JUL, 14, h, m));
+
+  it('shifts a UTC instant into Asia/Tokyo (UTC+9)', () => {
+    expect(fmtClock(atUtc(5, 30), '24h', 'Asia/Tokyo')).toBe('14:30');
+    expect(fmtClock(atUtc(5, 30), '12h', 'Asia/Tokyo')).toBe('2:30 PM');
+  });
+
+  it('shifts a UTC instant into Europe/London (UTC+1 in July)', () => {
+    expect(fmtClock(atUtc(5, 30), '24h', 'Europe/London')).toBe('06:30');
+  });
+
+  it('leaves a UTC instant unchanged in the UTC zone', () => {
+    expect(fmtClock(atUtc(5, 30), '24h', 'UTC')).toBe('05:30');
+  });
+});
+
+describe('fmtTimeRange — manual timezone', () => {
+  it('formats both ends in the zone and keeps the wall-clock duration', () => {
+    const start = new Date(Date.UTC(2026, JUL, 14, 2, 30));
+    const end = new Date(Date.UTC(2026, JUL, 14, 4, 0));
+    expect(fmtTimeRange(start, end, '12h', undefined, 'Asia/Tokyo')).toBe(
+      '11:30 AM – 1:00 PM · 1 hr 30 min',
+    );
+    expect(fmtTimeRange(start, end, '24h', undefined, 'Asia/Tokyo')).toBe(
+      '11:30 – 13:00 · 1 hr 30 min',
+    );
+  });
+
+  it('applies the zone to the meridiem-merge decision', () => {
+    // 02:30Z → 03:30Z is 11:30 AM – 12:30 PM in Tokyo: crossing noon keeps both.
+    const start = new Date(Date.UTC(2026, JUL, 14, 2, 30));
+    const end = new Date(Date.UTC(2026, JUL, 14, 3, 30));
+    expect(fmtTimeRange(start, end, '12h', undefined, 'Asia/Tokyo')).toBe(
+      '11:30 AM – 12:30 PM · 1 hr',
+    );
+  });
+});
+
 describe('relDayLabel', () => {
   it('labels today and tomorrow', () => {
     expect(relDayLabel(d(2026, JUL, 14, 18, 0), TODAY)).toBe('Today');

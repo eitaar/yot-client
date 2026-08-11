@@ -14,6 +14,7 @@ import {
   startOfDay,
   startOfWeek,
 } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 
 import { fmtDur, wallMinutesBetween } from './layoutDay';
 
@@ -25,11 +26,20 @@ function weekStartsOn(weekStart: WeekStart): 0 | 1 {
   return weekStart === 'Mon' ? 1 : 0;
 }
 
+/**
+ * Format a pattern in a zone, falling back to the device's local zone when
+ * none is given — the Auto-mode path (device-local rendering) stays identical.
+ */
+function fmtInZone(date: Date, pattern: string, timeZone?: string): string {
+  return timeZone ? formatInTimeZone(date, timeZone, pattern) : format(date, pattern);
+}
+
 /* ------------------------------------------------------------- clock/range */
 
-/** "2:30 PM" (12h) or "14:30" (24h). */
-export function fmtClock(date: Date, timeFormat: TimeFormat): string {
-  return format(date, timeFormat === '24h' ? 'HH:mm' : 'h:mm a');
+/** "2:30 PM" (12h) or "14:30" (24h), in the device zone or `timeZone`. */
+export function fmtClock(date: Date, timeFormat: TimeFormat, timeZone?: string): string {
+  const pattern = timeFormat === '24h' ? 'HH:mm' : 'h:mm a';
+  return fmtInZone(date, pattern, timeZone);
 }
 
 /**
@@ -51,14 +61,16 @@ export function fmtTimeRange(
    * an explicit value only to quote a duration computed some other way.
    */
   durationMinutes?: number,
+  /** IANA zone for the clock labels; defaults to the device zone. */
+  timeZone?: string,
 ): string {
-  const dur = fmtDur(durationMinutes ?? wallMinutesBetween(start, end));
+  const dur = fmtDur(durationMinutes ?? wallMinutesBetween(start, end, timeZone));
   if (timeFormat === '24h') {
-    return `${format(start, 'HH:mm')} – ${format(end, 'HH:mm')} · ${dur}`;
+    return `${fmtInZone(start, 'HH:mm', timeZone)} – ${fmtInZone(end, 'HH:mm', timeZone)} · ${dur}`;
   }
-  const sameMeridiem = format(start, 'a') === format(end, 'a');
-  const startLabel = sameMeridiem ? format(start, 'h:mm') : format(start, 'h:mm a');
-  return `${startLabel} – ${format(end, 'h:mm a')} · ${dur}`;
+  const sameMeridiem = fmtInZone(start, 'a', timeZone) === fmtInZone(end, 'a', timeZone);
+  const startLabel = sameMeridiem ? fmtInZone(start, 'h:mm', timeZone) : fmtInZone(start, 'h:mm a', timeZone);
+  return `${startLabel} – ${fmtInZone(end, 'h:mm a', timeZone)} · ${dur}`;
 }
 
 /* --------------------------------------------------------------- all-day */
@@ -81,20 +93,28 @@ export const ALL_DAY_LABEL = 'All day';
  * `fmtTimeRange` form. This is the helper screens should call — it is the only
  * one that knows about both branches.
  */
-export function fmtEventTimeRange(event: DayEvent, timeFormat: TimeFormat): string {
+export function fmtEventTimeRange(
+  event: DayEvent,
+  timeFormat: TimeFormat,
+  timeZone?: string,
+): string {
   if (event.allDay) {
     const days = allDaySpan(event);
     return days > 1 ? `${ALL_DAY_LABEL} · ${days} days` : ALL_DAY_LABEL;
   }
-  return fmtTimeRange(event.start, event.end, timeFormat);
+  return fmtTimeRange(event.start, event.end, timeFormat, undefined, timeZone);
 }
 
 /**
  * Narrow time label (list rows, month panel): `"All day"`, or just the start
  * clock. The counterpart to {@link fmtEventTimeRange} where width is scarce.
  */
-export function fmtEventStartLabel(event: DayEvent, timeFormat: TimeFormat): string {
-  return event.allDay ? ALL_DAY_LABEL : fmtClock(event.start, timeFormat);
+export function fmtEventStartLabel(
+  event: DayEvent,
+  timeFormat: TimeFormat,
+  timeZone?: string,
+): string {
+  return event.allDay ? ALL_DAY_LABEL : fmtClock(event.start, timeFormat, timeZone);
 }
 
 /** Whole calendar days an all-day event covers (at least 1). */

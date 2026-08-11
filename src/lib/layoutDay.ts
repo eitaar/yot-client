@@ -12,6 +12,7 @@
  */
 
 import { differenceInCalendarDays } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 /* -------------------------------------------------------------- constants */
 
@@ -51,6 +52,12 @@ export interface LayoutOptions {
   dayStart: Date;
   /** Real "now". Only affects output when it falls on the rendered day. */
   now?: Date;
+  /**
+   * IANA zone the wall clock is read in. When set, positions (and the NOW
+   * line) use that zone's wall time instead of the device's — the Manual
+   * timezone path. The rendered *day* still follows `dayStart`'s device day.
+   */
+  timeZone?: string;
 }
 
 export interface LayoutBlock {
@@ -91,10 +98,17 @@ export interface DayLayout {
  * Wall-clock minutes of `date` relative to midnight of `dayStart`'s calendar
  * day. Computed from calendar-day distance + local hours/minutes rather than a
  * raw millisecond delta, so a DST transition can't shift the grid by an hour.
+ *
+ * With `timeZone`, both instants are first shifted into that zone, so the
+ * hours/minutes (and the calendar-day distance) are read in the display zone —
+ * an event at Tokyo 11:00 lands at the 11:00 line of the rendered day even
+ * when the device itself is on UTC.
  */
-function wallMinutes(date: Date, dayStart: Date): number {
-  const dayDiff = differenceInCalendarDays(date, dayStart);
-  return dayDiff * DAY_MIN + date.getHours() * 60 + date.getMinutes();
+function wallMinutes(date: Date, dayStart: Date, timeZone?: string): number {
+  const d = timeZone ? toZonedTime(date, timeZone) : date;
+  const ds = timeZone ? toZonedTime(dayStart, timeZone) : dayStart;
+  const dayDiff = differenceInCalendarDays(d, ds);
+  return dayDiff * DAY_MIN + d.getHours() * 60 + d.getMinutes();
 }
 
 /**
@@ -107,8 +121,8 @@ function wallMinutes(date: Date, dayStart: Date): number {
  * capsule; in autumn the error runs the other way. Labels must quote what the
  * geometry shows, so every duration string beside a capsule comes from this.
  */
-export function wallMinutesBetween(start: Date, end: Date): number {
-  return wallMinutes(end, start) - wallMinutes(start, start);
+export function wallMinutesBetween(start: Date, end: Date, timeZone?: string): number {
+  return wallMinutes(end, start, timeZone) - wallMinutes(start, start, timeZone);
 }
 
 function clampToDay(min: number): number {
@@ -196,12 +210,12 @@ export function layoutDay(
   events: readonly TimelineEvent[],
   opts: LayoutOptions,
 ): DayLayout {
-  const { dayStart, now } = opts;
+  const { dayStart, now, timeZone } = opts;
 
   const placed: Placed[] = events
     .map((e) => {
-      const startMin = clampToDay(wallMinutes(e.start, dayStart));
-      const endMin = Math.max(startMin, clampToDay(wallMinutes(e.end, dayStart)));
+      const startMin = clampToDay(wallMinutes(e.start, dayStart, timeZone));
+      const endMin = Math.max(startMin, clampToDay(wallMinutes(e.end, dayStart, timeZone)));
       return { id: e.id, startMin, endMin, lane: 0, cols: 1 };
     })
     // Sort on start only — like v15. Array.prototype.sort is stable, so events
@@ -222,7 +236,8 @@ export function layoutDay(
   assignLanes(placed);
 
   const isToday = now != null && differenceInCalendarDays(now, dayStart) === 0;
-  const nowMin = isToday && now ? now.getHours() * 60 + now.getMinutes() : null;
+  const zonedNow = isToday && now ? (timeZone ? toZonedTime(now, timeZone) : now) : null;
+  const nowMin = zonedNow ? zonedNow.getHours() * 60 + zonedNow.getMinutes() : null;
 
   const blocks: LayoutBlock[] = placed.map((e) => ({
     id: e.id,
