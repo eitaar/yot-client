@@ -21,6 +21,7 @@ export default function MagazineFeed({
   events,
   today,
   timeFormat,
+  timeZone,
   onOpen,
   scrollProps,
 }: FeedLayoutProps) {
@@ -59,7 +60,7 @@ export default function MagazineFeed({
                 <Text style={styles.largeTitle} numberOfLines={2}>
                   {event.title}
                 </Text>
-                <Text style={styles.largeSub}>{feedTimeLabel(event, timeFormat)}</Text>
+                <Text style={styles.largeSub}>{feedTimeLabel(event, timeFormat, timeZone)}</Text>
               </View>
             </EventThumb>
           </AppPressable>
@@ -85,7 +86,7 @@ export default function MagazineFeed({
                 {event.title}
               </Text>
               <Text style={styles.rowSub} numberOfLines={1}>
-                {feedLongLine(event, today, timeFormat)}
+                {feedLongLine(event, today, timeFormat, timeZone)}
               </Text>
             </View>
           </AppPressable>

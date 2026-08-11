@@ -15,7 +15,12 @@ import StoriesFeed from '@/components/feed/StoriesFeed';
 import TrackingView from '@/components/feed/TrackingView';
 import type { FeedLayoutProps } from '@/components/feed/shared';
 import { upcoming, useEvents } from '@/store/events';
-import { useFeedLayout, useTimeFormat, type FeedLayout } from '@/store/settings';
+import {
+  useEffectiveTimeZone,
+  useFeedLayout,
+  useTimeFormat,
+  type FeedLayout,
+} from '@/store/settings';
 import { useTracking } from '@/store/tracking';
 import { colors } from '@/theme/tokens';
 
@@ -50,6 +55,7 @@ const LAYOUTS: Record<FeedLayout, (props: FeedLayoutProps) => React.ReactElement
 export default function FeedScreen() {
   const insets = useSafeAreaInsets();
   const timeFormat = useTimeFormat();
+  const timeZone = useEffectiveTimeZone();
   const feedLayout = useFeedLayout();
 
   const [mode, setMode] = useState<Mode>('feed');
@@ -80,9 +86,10 @@ export default function FeedScreen() {
       events,
       today,
       timeFormat,
+      timeZone,
       onOpen: (id: string) => router.push(`/event/${id}`),
     }),
-    [events, today, timeFormat],
+    [events, today, timeFormat, timeZone],
   );
 
   return (
@@ -112,6 +119,7 @@ export default function FeedScreen() {
         <AskView
           events={events}
           timeFormat={timeFormat}
+          timeZone={timeZone}
           onOpenEvent={(id) => router.push(`/event/${id}`)}
         />
       ) : null}

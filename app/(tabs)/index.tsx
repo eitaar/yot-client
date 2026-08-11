@@ -47,7 +47,7 @@ import {
   type LayoutBlock,
 } from '@/lib/layoutDay';
 import { selectSortedEvents, useDayEvents, useEvents } from '@/store/events';
-import { useTimeFormat, useWeekStart } from '@/store/settings';
+import { useEffectiveTimeZone, useTimeFormat, useWeekStart } from '@/store/settings';
 import { colors, easing, fonts, layout } from '@/theme/tokens';
 
 /**
@@ -170,17 +170,19 @@ function TimelineBlock({
   event,
   canvasWidth,
   timeFormat,
+  timeZone,
 }: {
   block: LayoutBlock;
   event: AppEvent;
   canvasWidth: number;
   timeFormat: '12h' | '24h';
+  timeZone?: string;
 }) {
   const geo = geometryFor(block, canvasWidth);
   const dim = block.isPast ? styles.past : null;
   const timeLabel = geo.narrow
-    ? `${fmtClock(event.start, timeFormat)} · ${fmtDur(block.endMin - block.startMin)}`
-    : fmtTimeRange(event.start, event.end, timeFormat);
+    ? `${fmtClock(event.start, timeFormat, timeZone)} · ${fmtDur(block.endMin - block.startMin)}`
+    : fmtTimeRange(event.start, event.end, timeFormat, undefined, timeZone);
 
   return (
     <>
@@ -251,6 +253,7 @@ export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const weekStart = useWeekStart();
   const timeFormat = useTimeFormat();
+  const timeZone = useEffectiveTimeZone();
 
   /* --- clock: the NOW line and "past" dimming must follow the real time --- */
   const [now, setNow] = useState(() => new Date());
@@ -336,8 +339,8 @@ export default function CalendarScreen() {
   };
 
   const dayLayout = useMemo(
-    () => layoutDay(dayEvents, { dayStart: selectedDate, now }),
-    [dayEvents, selectedDate, now],
+    () => layoutDay(dayEvents, { dayStart: selectedDate, now, timeZone }),
+    [dayEvents, selectedDate, now, timeZone],
   );
   const eventById = useMemo(() => {
     const map = new Map<string, AppEvent>();
@@ -564,6 +567,7 @@ export default function CalendarScreen() {
                       event={event}
                       canvasWidth={canvasWidth}
                       timeFormat={timeFormat}
+                      timeZone={timeZone}
                     />
                   );
                 })}
@@ -605,7 +609,7 @@ export default function CalendarScreen() {
                   key={event.id}
                   testID={`month-row-${event.id}`}
                   title={event.title}
-                  subtitle={fmtTimeRange(event.start, event.end, timeFormat)}
+                  subtitle={fmtTimeRange(event.start, event.end, timeFormat, undefined, timeZone)}
                   dotColor={event.color}
                   showChevron={false}
                   last={i === dayEvents.length - 1}

@@ -7,8 +7,10 @@ import {
   fmtDur,
   hourLabelText,
   layoutDay,
+  wallMinutesBetween,
   type TimelineEvent,
 } from '../layoutDay';
+import { toZonedTime } from 'date-fns-tz';
 
 /** Local-time constructor so these tests do not depend on the machine's TZ. */
 const at = (h: number, m = 0, day = 14) => new Date(2026, 6, day, h, m, 0, 0);
@@ -207,6 +209,74 @@ describe('layoutDay — now', () => {
 
   it('returns no NOW line when now is omitted', () => {
     expect(layoutDay(designDay, { dayStart: DAY }).nowOffset).toBeNull();
+  });
+});
+
+describe('layoutDay — manual timezone', () => {
+  // The zoned path shifts both the event and the day start into the zone, so
+  // the day-start distance cancels the machine's local zone: the expected
+  // positions below are deterministic under any device TZ.
+  const DAY_UTC = new Date(Date.UTC(2026, 6, 13, 15, 0)); // Jul 14 00:00 in Asia/Tokyo
+  const evAt = (h: number, m = 0, endH?: number, endM = 0): TimelineEvent => {
+    const start = new Date(DAY_UTC.getTime() + (h * 60 + m) * 60_000); // Tokyo h:m → instant
+    const end =
+      endH !== undefined
+        ? new Date(DAY_UTC.getTime() + (endH * 60 + endM) * 60_000)
+        : new Date(start.getTime() + 30 * 60_000);
+    return { id: 'tz', start, end };
+  };
+
+  it('positions an event by the zone wall clock, not the device clock', () => {
+    // The instant is Tokyo Jul 14 19:00; the capsule must sit at the 19:00 line
+    // whatever zone the machine itself is in.
+    const r = layoutDay([evAt(19, 0)], { dayStart: DAY_UTC, timeZone: 'Asia/Tokyo' });
+    expect(byId(r, 'tz').startMin).toBe(19 * 60);
+    expect(byId(r, 'tz').endMin).toBe(19 * 60 + 30);
+  });
+
+  it('falls back to device-local minutes without a zone', () => {
+    // No timeZone → plain getHours() on the machine. Local-time constructors
+    // keep this deterministic: 10:00 local is always the 10:00 line.
+    const start = new Date(2026, 6, 14, 10, 0);
+    const end = new Date(2026, 6, 14, 10, 30);
+    const dayStart = new Date(2026, 6, 14, 0, 0);
+    const r = layoutDay([{ id: 'tz', start, end }], { dayStart });
+    expect(byId(r, 'tz').startMin).toBe(10 * 60);
+    expect(byId(r, 'tz').endMin).toBe(10 * 60 + 30);
+  });
+
+  it('places the NOW line by the zoned clock', () => {
+    // The NOW line must use the zoned wall clock, not the device clock. The
+    // expectation is derived with the same zone conversion and the same
+    // event-driven window (both ends), so it holds under any device TZ; when
+    // the zoned time falls outside the window the line is correctly hidden.
+    const dayStart = new Date(2026, 6, 14, 0, 0);
+    const event: TimelineEvent = {
+      id: 'e',
+      start: new Date(2026, 6, 14, 9, 0),
+      end: new Date(2026, 6, 14, 10, 0),
+    };
+    const now = new Date(2026, 6, 14, 12, 0);
+    const r = layoutDay([event], { dayStart, now, timeZone: 'Asia/Tokyo' });
+    const zonedNow = toZonedTime(now, 'Asia/Tokyo');
+    const zonedStart = toZonedTime(event.start, 'Asia/Tokyo');
+    const zonedEnd = toZonedTime(event.end, 'Asia/Tokyo');
+    const nowMin = zonedNow.getHours() * 60 + zonedNow.getMinutes();
+    const startMin = zonedStart.getHours() * 60 + zonedStart.getMinutes();
+    const endMin = zonedEnd.getHours() * 60 + zonedEnd.getMinutes();
+    const winStart = Math.max(0, Math.floor(startMin / 60) * 60 - 60);
+    const winEnd = Math.min(24 * 60, Math.ceil(endMin / 60) * 60 + 60);
+    const expected =
+      nowMin >= winStart && nowMin <= winEnd ? (nowMin - winStart) * PPM : null;
+    if (expected === null) expect(r.nowOffset).toBeNull();
+    else expect(r.nowOffset).toBeCloseTo(expected, 10);
+  });
+
+  it('computes wall-clock durations in the zone', () => {
+    // Jul 14 01:00Z → 03:00Z is 10:00 → 12:00 in Tokyo: 120 wall minutes.
+    const start = new Date(Date.UTC(2026, 6, 14, 1, 0));
+    const end = new Date(Date.UTC(2026, 6, 14, 3, 0));
+    expect(wallMinutesBetween(start, end, 'Asia/Tokyo')).toBe(120);
   });
 });
 

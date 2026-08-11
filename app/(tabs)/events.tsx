@@ -9,7 +9,7 @@ import PullToSync from '@/components/PullToSync';
 import ScreenHeader from '@/components/ScreenHeader';
 import { fmtTimeRange, groupUpcomingByDay } from '@/lib/dates';
 import { upcoming, useEvents } from '@/store/events';
-import { useTimeFormat } from '@/store/settings';
+import { useEffectiveTimeZone, useTimeFormat } from '@/store/settings';
 import { colors, fonts } from '@/theme/tokens';
 
 /**
@@ -23,6 +23,7 @@ import { colors, fonts } from '@/theme/tokens';
 export default function EventsScreen() {
   const insets = useSafeAreaInsets();
   const timeFormat = useTimeFormat();
+  const timeZone = useEffectiveTimeZone();
 
   // Re-derive the grouping when the calendar day rolls over, so a session left
   // open overnight does not keep calling yesterday "Today".
@@ -65,7 +66,7 @@ export default function EventsScreen() {
                   key={event.id}
                   testID={`event-row-${event.id}`}
                   title={event.title}
-                  subtitle={fmtTimeRange(event.start, event.end, timeFormat)}
+                  subtitle={fmtTimeRange(event.start, event.end, timeFormat, undefined, timeZone)}
                   dotColor={event.color}
                   onPress={() => router.push(`/event/${event.id}`)}
                 />

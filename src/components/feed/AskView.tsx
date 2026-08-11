@@ -52,6 +52,8 @@ interface AskState {
 export interface AskViewProps {
   events: readonly AppEvent[];
   timeFormat: TimeFormat;
+  /** IANA zone for clock labels; defaults to the device zone. */
+  timeZone?: string;
   onOpenEvent: (id: string) => void;
 }
 
@@ -72,7 +74,7 @@ function LoadingDot({ delay }: { delay: number }) {
 
 /* ------------------------------------------------------------------- view */
 
-export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProps) {
+export default function AskView({ events, timeFormat, timeZone, onOpenEvent }: AskViewProps) {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AskState | null>(null);
@@ -157,7 +159,7 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
     } catch (error) {
       if (thisRequest !== requestId.current) return;
       // Fallback to local engine
-      const next = answer(q, events, new Date(), { timeFormat });
+      const next = answer(q, events, new Date(), { timeFormat, timeZone });
       setLoading(false);
       const fallbackResult: AskState = {
         text: next.text + '\n\n（offline mode）',
@@ -262,7 +264,7 @@ export default function AskView({ events, timeFormat, onOpenEvent }: AskViewProp
                       onPress={() => onOpenEvent(id)}
                       style={styles.chip}
                     >
-                      <Text style={styles.chipTime}>{fmtClock(event.start, timeFormat)}</Text>
+                      <Text style={styles.chipTime}>{fmtClock(event.start, timeFormat, timeZone)}</Text>
                       <Text style={styles.chipTitle} numberOfLines={1}>
                         {event.title}
                       </Text>
