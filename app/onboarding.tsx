@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -33,7 +33,9 @@ import { listPlugins } from '@/plugins/loader';
 import type { PluginMeta } from '@/plugins/schema';
 import { useEvents } from '@/store/events';
 import { useSettings } from '@/store/settings';
-import { colors, easing, fonts, radii, springs } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { easing, fonts, radii, springs } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * The four-stage pairing flow — design lines 1143–1216, rendered as one screen
@@ -153,6 +155,8 @@ function PrimaryButton({
   enabled?: boolean;
   testID?: string;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const pressed = useSharedValue(0);
   const style = useAnimatedStyle(() => ({
     transform: [{ scale: 1 - pressed.value * 0.03 }],
@@ -185,6 +189,8 @@ function PrimaryButton({
 }
 
 function BackLink({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Pressable
       accessibilityRole="button"
@@ -201,6 +207,8 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 /** The 48px ink disc with the checkmark drawn on (design lines 1207–1210). */
 function DrawnCheck() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const offset = useSharedValue(26);
   const animatedProps = useAnimatedProps(() => ({ strokeDashoffset: offset.value }));
 
@@ -244,6 +252,8 @@ function PinBox({
   filled: boolean;
   index: number;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const active = useSharedValue(focused ? 1 : 0);
 
   useEffect(() => {
@@ -275,6 +285,8 @@ function PinBox({
 /* ------------------------------------------------------------------ screen */
 
 export default function OnboardingScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
   const [stage, setStage] = useState<Stage>('welcome');
@@ -584,8 +596,9 @@ export default function OnboardingScreen() {
 
 /* ------------------------------------------------------------------ styles */
 
-const styles = StyleSheet.create({
-  root: {
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
     flex: 1,
     backgroundColor: colors.canvas,
   },

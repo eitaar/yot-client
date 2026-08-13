@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Platform,
   ScrollView,
@@ -44,7 +44,9 @@ import {
   type TzMode,
   type WeekStart,
 } from '@/store/settings';
-import { colors, durations, easing, fonts, layout, radii, type } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { durations, easing, fonts, layout, radii, type } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * Settings (design lines 1218-1261).
@@ -198,6 +200,8 @@ function SettingsRow({
   delay = 0,
   testID,
 }: SettingsRowProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <FadeUp delay={delay}>
       <AppPressable
@@ -220,6 +224,8 @@ function SettingsRow({
 
 /** The design's `sVal`: 14px muted value plus a disclosure chevron. */
 function ValueAccessory({ value, testID }: { value: string; testID?: string }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.value}>
       <Text style={styles.valueText} testID={testID} numberOfLines={1}>
@@ -257,6 +263,8 @@ function PickerOverlay<T extends string>({
   onClose: () => void;
   topInset: number;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Animated.View
       entering={FadeIn.duration(durations.base)}
@@ -322,6 +330,8 @@ function ConfirmOverlay({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Animated.View
       entering={FadeIn.duration(durations.fast)}
@@ -365,6 +375,8 @@ function ConfirmOverlay({
 type PickerKind = 'region' | 'defaultView' | 'feedLayout';
 
 export default function SettingsScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
   const serverUrl = useSettings((s) => s.serverUrl);
@@ -690,8 +702,9 @@ export default function SettingsScreen() {
 
 /* ------------------------------------------------------------------ styles */
 
-const styles = StyleSheet.create({
-  root: {
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
     flex: 1,
     backgroundColor: colors.canvas,
   },

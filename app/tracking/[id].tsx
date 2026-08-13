@@ -13,7 +13,9 @@ import {
   itemById,
   useTracking,
 } from '@/store/tracking';
-import { colors, fonts, type } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts, type } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * Tracking detail (design lines 933-979).
@@ -23,6 +25,8 @@ import { colors, fonts, type } from '@/theme/tokens';
  * Then the description and a Type / Duration metadata block.
  */
 export default function TrackingDetailScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const now = useMemo(() => new Date(), []);
@@ -137,11 +141,12 @@ export default function TrackingDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.canvas,
-  },
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.canvas,
+    },
   header: {
     paddingTop: 14,
     paddingHorizontal: 24,
