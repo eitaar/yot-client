@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import AppPressable from '@/components/AppPressable';
 import type { PullScrollProps } from '@/components/PullToSync';
@@ -33,15 +33,18 @@ export default function TrackingView({ pluginId, onOpenItem, scrollProps }: Trac
   const now = useMemo(() => new Date(), []);
   const [spec, setSpec] = useState<TrackingPluginSpec>(() => buildDefaultSpec(now));
   const [data, setData] = useState<ResolvedTrackingData>(() => resolveSpecData(buildDefaultSpec(now)));
+  const [loading, setLoading] = useState(true);
 
   // Load the plugin's spec + data; reset the franchise filter on change.
   useEffect(() => {
     let alive = true;
+    setLoading(true);
     loadPluginSpec(pluginId, now).then((s) => {
       if (alive) {
         setSpec(s);
         setData(resolveSpecData(s));
         setFranchise(null);
+        setLoading(false);
       }
     });
     return () => {
@@ -62,6 +65,12 @@ export default function TrackingView({ pluginId, onOpenItem, scrollProps }: Trac
   const franchiseColor = (name: string): string =>
     data.franchises.find((f) => f.name === name)?.color ?? colors.ink;
 
+  const showChevron = spec.list?.chevron ?? true;
+  const showHairline = spec.list?.hairline ?? true;
+  const showFilter = spec.list?.filter ?? true;
+  const gutter = spec.list?.gutter ?? 24;
+  const rowPadding = spec.list?.rowPadding ?? 13;
+
   const rowContext = (item: TrackingItem): RenderContext => {
     const derived = describeWithSpec(item, now, spec.derive);
     const rec = item as unknown as Record<string, unknown>;
@@ -72,31 +81,43 @@ export default function TrackingView({ pluginId, onOpenItem, scrollProps }: Trac
     };
   };
 
+  // Show a loader until the real spec arrives — otherwise the bundled demo
+  // tracker flashes for a frame before a custom plugin's content loads.
+  if (loading) {
+    return (
+      <View style={[styles.root, styles.loading]} testID="feed-tracking">
+        <ActivityIndicator color={colors.muted} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.root} testID="feed-tracking">
-      <View style={styles.filterBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-          <Pill
-            label="All"
-            selected={franchise === null}
-            onPress={() => setFranchise(null)}
-            testID="tracking-pill-All"
-          />
-          {pills.map((f) => (
+      {showFilter ? (
+        <View style={styles.filterBar}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
             <Pill
-              key={f.name}
-              label={f.abbr}
-              selected={franchise === f.name}
-              onPress={() => setFranchise((prev) => (prev === f.name ? null : f.name))}
-              testID={`tracking-pill-${f.abbr}`}
+              label="All"
+              selected={franchise === null}
+              onPress={() => setFranchise(null)}
+              testID="tracking-pill-All"
             />
-          ))}
-        </ScrollView>
-      </View>
+            {pills.map((f) => (
+              <Pill
+                key={f.name}
+                label={f.abbr}
+                selected={franchise === f.name}
+                onPress={() => setFranchise((prev) => (prev === f.name ? null : f.name))}
+                testID={`tracking-pill-${f.abbr}`}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
 
       <ScrollView {...scrollProps} style={styles.scroll} contentContainerStyle={styles.content}>
         {groups.map((bucket) => (
-          <View key={bucket.group} style={styles.group}>
+          <View key={bucket.group} style={[styles.group, { paddingHorizontal: gutter }]}>
             <View style={styles.groupHeader}>
               <Text style={styles.groupLabel} testID={`tracking-group-${bucket.group}`}>
                 {bucket.group}
@@ -111,10 +132,10 @@ export default function TrackingView({ pluginId, onOpenItem, scrollProps }: Trac
                 accessibilityLabel={`${item.title}, ${item.franchise}`}
                 testID={`tracking-row-${item.id}`}
                 onPress={() => onOpenItem(item.id)}
-                style={styles.row}
+                style={[styles.row, { paddingVertical: rowPadding }, !showHairline && styles.rowNoHairline]}
               >
                 {spec.listRow ? renderTree(spec.listRow, rowContext(item)) : null}
-                <ChevronRightIcon />
+                {showChevron ? <ChevronRightIcon /> : null}
               </AppPressable>
             ))}
           </View>
@@ -155,6 +176,12 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     minHeight: 0,
+  },
+
+  loading: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 48,
   },
 
   filterBar: {
@@ -219,5 +246,8 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderBottomWidth: 1,
     borderBottomColor: colors.hairline,
+  },
+  rowNoHairline: {
+    borderBottomWidth: 0,
   },
 });

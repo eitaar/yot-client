@@ -91,6 +91,18 @@ export const ActionDefSchema = z.object({
 });
 export type ActionDef = z.infer<typeof ActionDefSchema>;
 
+/* ---- list chrome (per-row chevron / hairline / filter / spacing) ---- */
+export const ListChromeSchema = z.object({
+  chevron: z.boolean().optional(),
+  hairline: z.boolean().optional(),
+  filter: z.boolean().optional(),
+  /** Horizontal page gutter (px). Default 24. */
+  gutter: z.number().optional(),
+  /** Vertical padding per row (px). Card gap = 2× this. Default 13. */
+  rowPadding: z.number().optional(),
+});
+export type ListChrome = z.infer<typeof ListChromeSchema>;
+
 /* ---- spec ---- */
 export const TrackingPluginSpecSchema = z.object({
   id: z.string(),
@@ -101,6 +113,7 @@ export const TrackingPluginSpecSchema = z.object({
   derive: DeriveSpecSchema.optional(),
   listRow: ElementNodeSchema.optional(),
   detail: ElementNodeSchema.optional(),
+  list: ListChromeSchema.optional(),
   actions: z.record(z.string(), ActionDefSchema).optional(),
 });
 export type TrackingPluginSpec = z.infer<typeof TrackingPluginSpecSchema>;
