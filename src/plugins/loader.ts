@@ -1,17 +1,66 @@
 import { getJSON } from '@/api/client';
-import { buildDefaultSpec } from '@/plugins/defaultSpec';
-import { TrackingPluginSpecSchema, type TrackingPluginSpec } from '@/plugins/schema';
+import { buildDefaultSpec, DEFAULT_SPEC_ID } from '@/plugins/defaultSpec';
+import {
+  TrackingPluginSpecSchema,
+  type Franchise,
+  type TrackingPluginSpec,
+} from '@/plugins/schema';
+import type { TrackingItem } from '@/store/tracking';
 
 /**
- * Fetch the tracking spec from yot-server (`GET /api/plugins/tracking`), validate
+ * Fetch the tracking spec from yot-server (`GET /api/plugins/<id>`), validate
  * it, and fall back to the bundled default on any failure (offline, bad payload,
  * unauthenticated). `now` anchors the demo data when the default is used.
  */
-export async function loadTrackingSpec(now: Date = new Date()): Promise<TrackingPluginSpec> {
+export async function loadPluginSpec(id: string, now: Date = new Date()): Promise<TrackingPluginSpec> {
   try {
-    const raw = await getJSON('/plugins/tracking');
+    const raw = await getJSON(`/plugins/${encodeURIComponent(id)}`);
     return TrackingPluginSpecSchema.parse(raw);
   } catch {
     return buildDefaultSpec(now);
   }
+}
+
+/** List the plugin ids the server exposes (`GET /api/plugins`). */
+export async function listPlugins(): Promise<string[]> {
+  try {
+    const raw = (await getJSON('/plugins')) as { plugins?: unknown } | null;
+    if (raw && Array.isArray(raw.plugins)) {
+      return raw.plugins.filter((p): p is string => typeof p === 'string');
+    }
+  } catch {
+    // fall through to the default
+  }
+  return [DEFAULT_SPEC_ID];
+}
+
+/** Resolved plugin data — items with real `Date` objects (and extra fields). */
+export interface ResolvedTrackingData {
+  franchises: Franchise[];
+  items: TrackingItem[];
+}
+
+/**
+ * Turn a spec's inline `data` into renderable items. Extra item fields (e.g.
+ * `round`, `totalRounds`) are preserved so derive hooks like `index` can read
+ * them. The `fetch` data source is not implemented yet — returns empty.
+ */
+export function resolveSpecData(spec: TrackingPluginSpec): ResolvedTrackingData {
+  if ('fetch' in spec.data) {
+    return { franchises: [], items: [] };
+  }
+  return {
+    franchises: spec.data.franchises.map((f) => ({ ...f })),
+    items: spec.data.items.map((raw) => {
+      const { start, end, ...rest } = raw as Record<string, unknown> & {
+        start: string | null;
+        end: string | null;
+      };
+      return {
+        ...rest,
+        start: start ? new Date(start) : null,
+        end: end ? new Date(end) : null,
+      } as unknown as TrackingItem;
+    }),
+  };
 }

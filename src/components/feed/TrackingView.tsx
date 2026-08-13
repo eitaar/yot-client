@@ -5,26 +5,24 @@ import AppPressable from '@/components/AppPressable';
 import type { PullScrollProps } from '@/components/PullToSync';
 import { ChevronRightIcon } from '@/components/icons';
 import { describeWithSpec, groupItemsBySpec } from '@/plugins/derive';
-import { buildDefaultSpec } from '@/plugins/defaultSpec';
-import { loadTrackingSpec } from '@/plugins/loader';
+import { buildDefaultSpec, DEFAULT_SPEC_ID } from '@/plugins/defaultSpec';
+import {
+  listPlugins,
+  loadPluginSpec,
+  resolveSpecData,
+  type ResolvedTrackingData,
+} from '@/plugins/loader';
 import { renderTree, type RenderContext } from '@/plugins/renderer';
 import type { TrackingPluginSpec } from '@/plugins/schema';
-import {
-  activeFranchises,
-  filteredItems,
-  franchiseFor,
-  useTracking,
-  type TrackingItem,
-} from '@/store/tracking';
+import { compareTrackingItems, type TrackingItem } from '@/store/tracking';
 import { colors, fonts } from '@/theme/tokens';
 
 /**
  * The Tracking pane (design lines 818-931).
  *
- * Filter pills across the top ("All" plus one per franchise that actually has
- * items), then grouped rows. Grouping and per-row derivation come from the
- * active plugin spec (`derive` hooks); the row body is rendered from the spec's
- * `listRow` element tree. The pill bar and group headers stay host-owned.
+ * A plugin selector across the top, then filter pills ("All" plus one per
+ * franchise that has items), then grouped rows. Everything — data, grouping,
+ * per-row derivation, and the row body — comes from the active plugin spec.
  */
 export interface TrackingViewProps {
   onOpenItem: (id: string) => void;
@@ -32,52 +30,89 @@ export interface TrackingViewProps {
   scrollProps?: PullScrollProps;
 }
 
+function pluginLabel(id: string): string {
+  if (id === DEFAULT_SPEC_ID) return 'Tracking';
+  return id.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default function TrackingView({ onOpenItem, scrollProps }: TrackingViewProps) {
   const [franchise, setFranchise] = useState<string | null>(null);
-  const now = useMemo(() => new Date(), []);
+  const [pluginId, setPluginId] = useState<string>(DEFAULT_SPEC_ID);
+  const [plugins, setPlugins] = useState<string[]>([DEFAULT_SPEC_ID]);
 
-  // Default spec renders immediately; a server spec (OTA) replaces it when available.
+  const now = useMemo(() => new Date(), []);
   const [spec, setSpec] = useState<TrackingPluginSpec>(() => buildDefaultSpec(now));
+  const [data, setData] = useState<ResolvedTrackingData>(() => resolveSpecData(buildDefaultSpec(now)));
+
+  // Discover the available plugins once on mount.
   useEffect(() => {
     let alive = true;
-    loadTrackingSpec(now).then((s) => {
-      if (alive) setSpec(s);
+    listPlugins().then((ids) => {
+      if (alive) setPlugins(ids);
     });
     return () => {
       alive = false;
     };
-  }, [now]);
+  }, []);
 
-  const state = useTracking();
-  const pills = useMemo(() => activeFranchises(state), [state]);
-  const items = useMemo(() => filteredItems(state, franchise, now), [state, franchise, now]);
+  // Load the selected plugin's spec + data; reset the franchise filter.
+  useEffect(() => {
+    let alive = true;
+    loadPluginSpec(pluginId, now).then((s) => {
+      if (alive) {
+        setSpec(s);
+        setData(resolveSpecData(s));
+        setFranchise(null);
+      }
+    });
+    return () => {
+      alive = false;
+    };
+  }, [pluginId, now]);
+
+  const pills = useMemo(
+    () => data.franchises.filter((f) => data.items.some((i) => i.franchise === f.name)),
+    [data],
+  );
+  const items = useMemo(() => {
+    const sorted = [...data.items].sort((a, b) => compareTrackingItems(a, b, now));
+    return franchise ? sorted.filter((i) => i.franchise === franchise) : sorted;
+  }, [data, franchise, now]);
   const groups = useMemo(() => groupItemsBySpec(items, now, spec.derive), [items, now, spec]);
+
+  const franchiseColor = (name: string): string =>
+    data.franchises.find((f) => f.name === name)?.color ?? colors.ink;
 
   const rowContext = (item: TrackingItem): RenderContext => {
     const derived = describeWithSpec(item, now, spec.derive);
+    const rec = item as unknown as Record<string, unknown>;
     return {
-      item: {
-        id: item.id,
-        title: item.title,
-        franchise: item.franchise,
-        type: item.type,
-        start: item.start?.getTime() ?? null,
-        end: item.end?.getTime() ?? null,
-        desc: item.desc,
-      },
+      item: { ...rec, start: item.start?.getTime() ?? null, end: item.end?.getTime() ?? null },
       derived: derived as unknown as Record<string, unknown>,
-      color: franchiseFor(state, item.franchise)?.color ?? colors.ink,
+      color: franchiseColor(item.franchise),
     };
   };
 
   return (
     <View style={styles.root} testID="feed-tracking">
+      {plugins.length > 1 ? (
+        <View style={styles.pluginBar}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+            {plugins.map((id) => (
+              <Pill
+                key={id}
+                label={pluginLabel(id)}
+                selected={pluginId === id}
+                onPress={() => setPluginId(id)}
+                testID={`tracking-plugin-${id}`}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <View style={styles.filterBar}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
           <Pill
             label="All"
             selected={franchise === null}
@@ -89,7 +124,6 @@ export default function TrackingView({ onOpenItem, scrollProps }: TrackingViewPr
               key={f.name}
               label={f.abbr}
               selected={franchise === f.name}
-              // Tapping the selected pill clears it (design line 878).
               onPress={() => setFranchise((prev) => (prev === f.name ? null : f.name))}
               testID={`tracking-pill-${f.abbr}`}
             />
@@ -160,6 +194,11 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
 
+  pluginBar: {
+    paddingTop: 12,
+    paddingBottom: 4,
+    flexShrink: 0,
+  },
   filterBar: {
     paddingBottom: 12,
     borderBottomWidth: 1,
