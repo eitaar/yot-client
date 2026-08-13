@@ -9,7 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 import { easing, fonts, layout } from '@/theme/tokens';
 import type { Colors } from '@/theme/tokens';
 

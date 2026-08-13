@@ -1,9 +1,12 @@
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import AppPressable from '@/components/AppPressable';
 import EventThumb from '@/components/EventThumb';
 import { feedLongLine, type FeedLayoutProps } from '@/components/feed/shared';
-import { colors, fonts } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * Feed layout D — **Stories** (design lines 625-652).
@@ -24,6 +27,8 @@ export default function StoriesFeed({
   onOpen,
   scrollProps,
 }: FeedLayoutProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const now = new Date();
   const circles = events.slice(0, 8);
 
@@ -102,78 +107,79 @@ export default function StoriesFeed({
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    scroll: {
+      flex: 1,
+    },
 
-  strip: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineStrong,
-  },
-  stripContent: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingTop: 8,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-  circleSlot: {
-    width: 62,
-    alignItems: 'center',
-    gap: 6,
-    flexShrink: 0,
-  },
-  circle: {
-    width: 52,
-    height: 52,
-    borderWidth: 2,
-  },
-  circleUpcoming: {
-    borderColor: colors.ink,
-  },
-  circlePast: {
-    borderColor: '#E8E8E6',
-  },
-  circleLabel: {
-    fontSize: 10,
-    fontFamily: fonts.semibold,
-    color: colors.muted,
-    textAlign: 'center',
-    lineHeight: 12,
-    width: '100%',
-  },
+    strip: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.hairlineStrong,
+    },
+    stripContent: {
+      flexDirection: 'row',
+      gap: 10,
+      paddingTop: 8,
+      paddingHorizontal: 20,
+      paddingBottom: 16,
+    },
+    circleSlot: {
+      width: 62,
+      alignItems: 'center',
+      gap: 6,
+      flexShrink: 0,
+    },
+    circle: {
+      width: 52,
+      height: 52,
+      borderWidth: 2,
+    },
+    circleUpcoming: {
+      borderColor: colors.ink,
+    },
+    circlePast: {
+      borderColor: '#E8E8E6',
+    },
+    circleLabel: {
+      fontSize: 10,
+      fontFamily: fonts.semibold,
+      color: colors.muted,
+      textAlign: 'center',
+      lineHeight: 12,
+      width: '100%',
+    },
 
-  cards: {
-    paddingTop: 16,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
-  card: {
-    marginBottom: 14,
-  },
-  cardThumb: {
-    width: '100%',
-  },
-  caption: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 14,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontFamily: fonts.bold,
-    color: colors.ink,
-    letterSpacing: -0.3,
-  },
-  cardTitleFirst: {
-    fontSize: 18,
-  },
-  cardSub: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: 'rgba(0,0,0,0.4)',
-    marginTop: 2,
-  },
-});
+    cards: {
+      paddingTop: 16,
+      paddingHorizontal: 20,
+      paddingBottom: 24,
+    },
+    card: {
+      marginBottom: 14,
+    },
+    cardThumb: {
+      width: '100%',
+    },
+    caption: {
+      position: 'absolute',
+      left: 16,
+      right: 16,
+      bottom: 14,
+    },
+    cardTitle: {
+      fontSize: 15,
+      fontFamily: fonts.bold,
+      color: colors.ink,
+      letterSpacing: -0.3,
+    },
+    cardTitleFirst: {
+      fontSize: 18,
+    },
+    cardSub: {
+      fontSize: 12,
+      fontFamily: fonts.regular,
+      color: 'rgba(0,0,0,0.4)',
+      marginTop: 2,
+    },
+  });

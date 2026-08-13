@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 import { fonts, radii } from '@/theme/tokens';
 import type { Colors } from '@/theme/tokens';
 

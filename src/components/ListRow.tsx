@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-na
 
 import AppPressable from '@/components/AppPressable';
 import { ChevronRightIcon } from '@/components/icons';
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 import { layout, type } from '@/theme/tokens';
 import type { Colors } from '@/theme/tokens';
 

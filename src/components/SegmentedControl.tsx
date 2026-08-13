@@ -10,7 +10,7 @@ import {
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 import AppPressable from '@/components/AppPressable';
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 import { radii, shadows, springs, type } from '@/theme/tokens';
 import type { Colors } from '@/theme/tokens';
 

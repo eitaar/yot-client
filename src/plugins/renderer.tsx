@@ -1,7 +1,9 @@
 import { Fragment } from 'react';
 import { Pressable } from 'react-native';
+
 import { resolveComponent } from '@/plugins/catalog';
 import type { Condition, ElementNode } from '@/plugins/schema';
+import type { Colors } from '@/theme/tokens';
 
 function getValue(field: string, ctx: Record<string, unknown>): unknown {
   return field.split('.').reduce<unknown>(
@@ -58,6 +60,8 @@ export interface RenderContext {
   derived: Record<string, unknown>;
   color?: string;
   actions?: Record<string, { run: () => void }>;
+  /** The active palette — used to resolve the component catalog. */
+  colors: Colors;
 }
 
 export function renderTree(node: ElementNode, ctx: RenderContext): React.ReactElement | null {
@@ -67,7 +71,7 @@ export function renderTree(node: ElementNode, ctx: RenderContext): React.ReactEl
 
   const value = node.value ? String(interpolate(node.value, scope) ?? '') : undefined;
   const props = interpolateProps(node.props, scope);
-  const Component = resolveComponent(node.type);
+  const Component = resolveComponent(node.type, ctx.colors);
   const onPress = node.action ? ctx.actions?.[node.action]?.run : undefined;
   const children = (node.children ?? []).map((c) => renderTree(c, ctx)).filter(Boolean) as React.ReactElement[];
 

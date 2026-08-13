@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 import { type } from '@/theme/tokens';
 import type { Colors } from '@/theme/tokens';
 

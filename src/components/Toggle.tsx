@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import AppPressable from '@/components/AppPressable';
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 import { radii, shadows, springs } from '@/theme/tokens';
 import type { Colors } from '@/theme/tokens';
 

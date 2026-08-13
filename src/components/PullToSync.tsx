@@ -39,7 +39,7 @@ import {
   type PullPhase,
 } from '@/lib/pullToSync';
 import { useEvents } from '@/store/events';
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 import { easing } from '@/theme/tokens';
 import type { Colors } from '@/theme/tokens';
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -7,7 +7,9 @@ import { CheckIcon } from '@/components/icons';
 import { BUILTIN_SEGMENTS } from '@/plugins/builtins';
 import type { PluginMeta } from '@/plugins/schema';
 import { usePlugins } from '@/store/plugins';
-import { colors, fonts, springs } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts, springs } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * A list of toggleable feed segments: the built-ins (Ask, …) first, then the
@@ -20,6 +22,8 @@ export interface PluginPickerProps {
 }
 
 export default function PluginPicker({ plugins }: PluginPickerProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const hiddenBuiltIns = usePlugins((s) => s.hiddenBuiltIns);
   const toggleBuiltIn = usePlugins((s) => s.toggleBuiltIn);
   const added = usePlugins((s) => s.added);
@@ -86,6 +90,8 @@ function AddButton({
   label: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scale = useSharedValue(added ? 1 : 0);
 
   useEffect(() => {
@@ -118,45 +124,55 @@ function AddButton({
   );
 }
 
-const styles = StyleSheet.create({
-  list: {
-    gap: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  rowText: {
-    flex: 1,
-    gap: 2,
-  },
-  title: {
-    fontSize: 15,
-    fontFamily: fonts.semibold,
-    color: colors.ink,
-  },
-  desc: {
-    fontSize: 13,
-    fontFamily: fonts.regular,
-    color: colors.muted,
-  },
-  addButton: {
-    width: 64,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.ink,
-  },
-  addButtonAdded: {
-    backgroundColor: colors.green,
-  },
-  addLabel: {
-    fontSize: 13,
-    fontFamily: fonts.semibold,
-    color: colors.canvas,
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    list: {
+      gap: 4,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+    },
+    rowText: {
+      flex: 1,
+      gap: 2,
+    },
+    title: {
+      fontSize: 15,
+      fontFamily: fonts.semibold,
+      color: colors.ink,
+    },
+    desc: {
+      fontSize: 13,
+      fontFamily: fonts.regular,
+      color: colors.muted,
+    },
+    addButton: {
+      width: 64,
+      height: 32,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.ink,
+    },
+    addButtonAdded: {
+      backgroundColor: colors.green,
+    },
+    addLabel: {
+      fontSize: 13,
+      fontFamily: fonts.semibold,
+      color: colors.canvas,
+    },
+    empty: {
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+    },
+    emptyText: {
+      fontSize: 13,
+      fontFamily: fonts.regular,
+      color: colors.muted,
+    },
+  });

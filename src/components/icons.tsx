@@ -1,6 +1,6 @@
 import Svg, { Circle, Path, type SvgProps } from 'react-native-svg';
 
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 
 /**
  * Icons transcribed from `project/Calendar App v15.dc.html`. Path data is

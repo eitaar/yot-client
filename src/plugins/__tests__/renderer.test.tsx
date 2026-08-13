@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react-native';
 import { evalCondition, interpolate, renderTree } from '@/plugins/renderer';
+import { lightColors } from '@/theme/tokens';
 
 describe('interpolate', () => {
   it('substitutes dot paths', () => {
@@ -20,12 +21,12 @@ describe('evalCondition', () => {
 
 describe('renderTree', () => {
   it('hides a node whose showIf is false', () => {
-    const out = renderTree({ type: 'Text', value: 'hi', showIf: { field: 'derived.showProgress', is: 'truthy' } }, { item: {}, derived: { showProgress: false } });
+    const out = renderTree({ type: 'Text', value: 'hi', showIf: { field: 'derived.showProgress', is: 'truthy' } }, { item: {}, derived: { showProgress: false }, colors: lightColors });
     expect(out).toBeNull();
   });
   it('renders an interpolated title', async () => {
     const { getByText } = await render(
-      renderTree({ type: 'Title', value: '{{item.title}}' }, { item: { title: 'Arlecchino' }, derived: {} })!,
+      renderTree({ type: 'Title', value: '{{item.title}}' }, { item: { title: 'Arlecchino' }, derived: {}, colors: lightColors })!,
     );
     expect(getByText('Arlecchino')).toBeTruthy();
   });
@@ -34,7 +35,7 @@ describe('renderTree', () => {
     const { getByText } = await render(
       renderTree(
         { type: 'Route', props: { origin: '{{item.origin}}', destination: '{{item.destination}}', progress: '{{derived.progress}}' } },
-        { item: { origin: 'HND', destination: 'SFO' }, derived: { progress: 0 }, color: '#0066B3' },
+        { item: { origin: 'HND', destination: 'SFO' }, derived: { progress: 0 }, color: '#0066B3', colors: lightColors },
       )!,
     );
     expect(getByText('HND')).toBeTruthy();
@@ -43,7 +44,7 @@ describe('renderTree', () => {
 
   it('renders a badge with a variant', async () => {
     const { getByText } = await render(
-      renderTree({ type: 'Badge', value: 'On time', props: { variant: 'success' } }, { item: {}, derived: {} })!,
+      renderTree({ type: 'Badge', value: 'On time', props: { variant: 'success' } }, { item: {}, derived: {}, colors: lightColors })!,
     );
     expect(getByText('On time')).toBeTruthy();
   });
@@ -52,7 +53,7 @@ describe('renderTree', () => {
     const { getByText } = await render(
       renderTree(
         { type: 'Card', children: [{ type: 'CardTitle', value: 'HND → SFO' }] },
-        { item: {}, derived: {} },
+        { item: {}, derived: {}, colors: lightColors },
       )!,
     );
     expect(getByText('HND → SFO')).toBeTruthy();
@@ -61,7 +62,7 @@ describe('renderTree', () => {
   it('renders an inline svg', async () => {
     const svg = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>';
     const { toJSON } = await render(
-      renderTree({ type: 'Svg', props: { svg, width: 24, height: 24 } }, { item: {}, derived: {} })!,
+      renderTree({ type: 'Svg', props: { svg, width: 24, height: 24 } }, { item: {}, derived: {}, colors: lightColors })!,
     );
     expect(toJSON()).toBeTruthy();
   });

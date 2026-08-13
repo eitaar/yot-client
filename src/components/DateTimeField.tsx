@@ -7,7 +7,7 @@ import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from
 
 import AppPressable from '@/components/AppPressable';
 import type { TimeFormat } from '@/lib/dates';
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 import { fonts, radii } from '@/theme/tokens';
 import type { Colors } from '@/theme/tokens';
 
