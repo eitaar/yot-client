@@ -1,8 +1,10 @@
 import tokens, {
-  colors,
+  darkColors,
   easing,
   eventPalette,
   fonts,
+  lightColors,
+  themes,
   type,
 } from '@/theme/tokens';
 
@@ -12,11 +14,18 @@ import tokens, {
  */
 describe('design tokens', () => {
   it('exposes the core palette from the v15 design', () => {
-    expect(colors.ink).toBe('#0F0F0F');
-    expect(colors.canvas).toBe('#FFFFFF');
-    expect(colors.pageBg).toBe('#EDEBE7');
-    expect(colors.muted).toBe('#999999');
-    expect(colors.blue).toBe('#4361EE');
+    expect(lightColors.ink).toBe('#0F0F0F');
+    expect(lightColors.canvas).toBe('#FFFFFF');
+    expect(lightColors.pageBg).toBe('#EDEBE7');
+    expect(lightColors.muted).toBe('#999999');
+    expect(lightColors.blue).toBe('#4361EE');
+  });
+
+  it('has a dark palette keyed identically to the light one', () => {
+    expect(Object.keys(darkColors).sort()).toEqual(Object.keys(lightColors).sort());
+    expect(darkColors.canvas).not.toBe(lightColors.canvas);
+    expect(themes.light).toBe(lightColors);
+    expect(themes.dark).toBe(darkColors);
   });
 
   it('has the three-colour event palette', () => {
@@ -45,7 +54,7 @@ describe('design tokens', () => {
   });
 
   it('has a default export bundling every group', () => {
-    expect(tokens.colors).toBe(colors);
+    expect(tokens.colors).toBe(lightColors);
     expect(tokens.fonts).toBe(fonts);
   });
 });
