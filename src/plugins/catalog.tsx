@@ -17,7 +17,7 @@ export type CatalogEntry = (p: ElementProps) => React.ReactElement;
  */
 export const catalog: Record<string, CatalogEntry> = {
   Row: ({ children }) => (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13 }}>{children}</View>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1 }}>{children}</View>
   ),
   Column: ({ children }) => <View style={{ flex: 1, minWidth: 0 }}>{children}</View>,
   Scroll: ({ children }) => <View>{children}</View>,
