@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import AppPressable from '@/components/AppPressable';
 import type { PullScrollProps } from '@/components/PullToSync';
 import { ChevronRightIcon } from '@/components/icons';
+import PluginPicker from '@/components/feed/PluginPicker';
 import { describeWithSpec, groupItemsBySpec } from '@/plugins/derive';
 import { buildDefaultSpec, DEFAULT_SPEC_ID } from '@/plugins/defaultSpec';
 import {
@@ -13,15 +14,16 @@ import {
   type ResolvedTrackingData,
 } from '@/plugins/loader';
 import { renderTree, type RenderContext } from '@/plugins/renderer';
-import type { TrackingPluginSpec } from '@/plugins/schema';
+import type { PluginMeta, TrackingPluginSpec } from '@/plugins/schema';
+import { usePlugins } from '@/store/plugins';
 import { compareTrackingItems, type TrackingItem } from '@/store/tracking';
 import { colors, fonts } from '@/theme/tokens';
 
 /**
  * The Tracking pane (design lines 818-931).
  *
- * A plugin selector across the top, then filter pills ("All" plus one per
- * franchise that has items), then grouped rows. Everything — data, grouping,
+ * A plugin selector (added plugins + an "Add" pill that opens the picker),
+ * then franchise filter pills, then grouped rows. Everything — data, grouping,
  * per-row derivation, and the row body — comes from the active plugin spec.
  */
 export interface TrackingViewProps {
@@ -30,45 +32,50 @@ export interface TrackingViewProps {
   scrollProps?: PullScrollProps;
 }
 
-function pluginLabel(id: string): string {
-  if (id === DEFAULT_SPEC_ID) return 'Tracking';
-  return id.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 export default function TrackingView({ onOpenItem, scrollProps }: TrackingViewProps) {
+  const added = usePlugins((s) => s.added);
+  const activeId = usePlugins((s) => s.activeId);
+  const setActive = usePlugins((s) => s.setActive);
+
+  const [allPlugins, setAllPlugins] = useState<PluginMeta[]>([]);
+  const [adding, setAdding] = useState(false);
   const [franchise, setFranchise] = useState<string | null>(null);
-  const [pluginId, setPluginId] = useState<string>(DEFAULT_SPEC_ID);
-  const [plugins, setPlugins] = useState<string[]>([DEFAULT_SPEC_ID]);
 
   const now = useMemo(() => new Date(), []);
   const [spec, setSpec] = useState<TrackingPluginSpec>(() => buildDefaultSpec(now));
   const [data, setData] = useState<ResolvedTrackingData>(() => resolveSpecData(buildDefaultSpec(now)));
 
-  // Discover the available plugins once on mount.
+  // The plugin actually shown: explicit active, else first added, else default.
+  const effectiveId = activeId ?? added[0]?.id ?? DEFAULT_SPEC_ID;
+
+  // Discover available plugins once on mount.
   useEffect(() => {
     let alive = true;
-    listPlugins().then((ids) => {
-      if (alive) setPlugins(ids);
+    listPlugins().then((metas) => {
+      if (alive) setAllPlugins(metas);
     });
     return () => {
       alive = false;
     };
   }, []);
 
-  // Load the selected plugin's spec + data; reset the franchise filter.
+  // Load the active plugin's spec + data; report its title to the header.
   useEffect(() => {
     let alive = true;
-    loadPluginSpec(pluginId, now).then((s) => {
+    loadPluginSpec(effectiveId, now).then((s) => {
       if (alive) {
         setSpec(s);
         setData(resolveSpecData(s));
         setFranchise(null);
+        setActive(s.id, s.title);
       }
     });
     return () => {
       alive = false;
     };
-  }, [pluginId, now]);
+  }, [effectiveId, now, setActive]);
+
+  const available = allPlugins.filter((p) => !added.some((a) => a.id === p.id));
 
   const pills = useMemo(
     () => data.franchises.filter((f) => data.items.some((i) => i.franchise === f.name)),
@@ -93,21 +100,36 @@ export default function TrackingView({ onOpenItem, scrollProps }: TrackingViewPr
     };
   };
 
+  const selectPlugin = (meta: PluginMeta) => {
+    setActive(meta.id, meta.title);
+    setAdding(false);
+  };
+
   return (
     <View style={styles.root} testID="feed-tracking">
-      {plugins.length > 1 ? (
-        <View style={styles.pluginBar}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-            {plugins.map((id) => (
-              <Pill
-                key={id}
-                label={pluginLabel(id)}
-                selected={pluginId === id}
-                onPress={() => setPluginId(id)}
-                testID={`tracking-plugin-${id}`}
-              />
-            ))}
-          </ScrollView>
+      <View style={styles.pluginBar}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          {added.map((p) => (
+            <Pill
+              key={p.id}
+              label={p.title}
+              selected={effectiveId === p.id}
+              onPress={() => selectPlugin(p)}
+              testID={`tracking-plugin-${p.id}`}
+            />
+          ))}
+          <Pill
+            label="+ Add"
+            selected={adding}
+            onPress={() => setAdding((v) => !v)}
+            testID="tracking-plugin-add"
+          />
+        </ScrollView>
+      </View>
+
+      {adding ? (
+        <View style={styles.pickerWrap}>
+          <PluginPicker available={available} />
         </View>
       ) : null}
 
@@ -198,6 +220,12 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 4,
     flexShrink: 0,
+  },
+  pickerWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairlineStrong,
   },
   filterBar: {
     paddingBottom: 12,
