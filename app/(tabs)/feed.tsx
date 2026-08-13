@@ -22,6 +22,7 @@ import {
   type FeedLayout,
 } from '@/store/settings';
 import { useTracking } from '@/store/tracking';
+import { usePlugins } from '@/store/plugins';
 import { colors } from '@/theme/tokens';
 
 /**
@@ -73,6 +74,9 @@ export default function FeedScreen() {
 
   const events = useEvents((s) => upcoming(s, today));
 
+  // The active plugin's title drives the header in tracking mode.
+  const activeTitle = usePlugins((s) => s.activeTitle);
+
   // The tracking dataset is seeded lazily; the pane is one tap away, so the
   // seed happens on mount rather than when the tab is switched.
   const ensureSeeded = useTracking((s) => s.ensureSeeded);
@@ -94,7 +98,7 @@ export default function FeedScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]} testID="feed-screen">
-      <ScreenHeader title={mode === 'tracking' ? 'Tracking' : 'Feed'} testID="feed-header" />
+      <ScreenHeader title={mode === 'tracking' ? (activeTitle ?? 'Tracking') : 'Feed'} testID="feed-header" />
 
       <SegmentedControl
         options={MODES}

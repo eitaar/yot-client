@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -27,7 +28,11 @@ import Svg, { Path } from 'react-native-svg';
 import { completePairing, probeHealth } from '@/api/client';
 import { saveBaseUrl } from '@/api/session';
 import { BackChevronIcon } from '@/components/icons';
+import PluginPicker from '@/components/feed/PluginPicker';
+import { listPlugins } from '@/plugins/loader';
+import type { PluginMeta } from '@/plugins/schema';
 import { useEvents } from '@/store/events';
+import { usePlugins } from '@/store/plugins';
 import { useSettings } from '@/store/settings';
 import { colors, easing, fonts, radii, springs } from '@/theme/tokens';
 
@@ -40,7 +45,7 @@ import { colors, easing, fonts, radii, springs } from '@/theme/tokens';
  *  - a **failure path** back to the PIN stage, which the prototype never had.
  */
 
-type Stage = 'welcome' | 'connect' | 'pin' | 'verifying';
+type Stage = 'welcome' | 'connect' | 'pin' | 'verifying' | 'plugins';
 type ServerStatus = 'idle' | 'checking' | 'reachable' | 'error';
 
 const PIN_LENGTH = 6;
@@ -285,6 +290,10 @@ export default function OnboardingScreen() {
 
   const [verifyDone, setVerifyDone] = useState(false);
 
+  const [allPlugins, setAllPlugins] = useState<PluginMeta[]>([]);
+  const addedPlugins = usePlugins((s) => s.added);
+  const availablePlugins = allPlugins.filter((p) => !addedPlugins.some((a) => a.id === p.id));
+
   const probeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Guards against a slow probe landing after a newer keystroke. */
   const probeSeq = useRef(0);
@@ -313,6 +322,14 @@ export default function OnboardingScreen() {
     },
     [],
   );
+
+  // Fetch the plugin list once pairing has succeeded, before showing the
+  // plugin-selection stage.
+  useEffect(() => {
+    if (stage === 'plugins') {
+      void listPlugins().then(setAllPlugins);
+    }
+  }, [stage]);
 
   /* ----------------------------------------------------------- server probe */
 
@@ -383,13 +400,18 @@ export default function OnboardingScreen() {
       setVerifyDone(true);
       await new Promise((resolve) => setTimeout(resolve, CONNECTED_HOLD_MS));
 
-      useSettings.getState().update({ onboarded: true, serverUrl: baseUrl });
-      void useEvents.getState().sync();
-
-      const view = useSettings.getState().defaultView;
-      router.replace(view === 'events' ? '/events' : view === 'feed' ? '/feed' : '/');
+      // Paired — offer the plugin picker before handing over to the app.
+      setStage('plugins');
     })();
   }, [baseUrl, pin]);
+
+  const finishOnboarding = useCallback(() => {
+    useSettings.getState().update({ onboarded: true, serverUrl: baseUrl });
+    void useEvents.getState().sync();
+
+    const view = useSettings.getState().defaultView;
+    router.replace(view === 'events' ? '/events' : view === 'feed' ? '/feed' : '/');
+  }, [baseUrl]);
 
   /* ---------------------------------------------------------------- stages */
 
@@ -527,6 +549,19 @@ export default function OnboardingScreen() {
         />
       </View>
     );
+  } else if (stage === 'plugins') {
+    body = (
+      <View style={styles.stage}>
+        <Text style={styles.title}>Choose plugins</Text>
+        <Text style={styles.subcopy}>
+          Add the tracking plugins you want to follow. You can add more later.
+        </Text>
+        <ScrollView style={styles.pluginList}>
+          <PluginPicker available={availablePlugins} />
+        </ScrollView>
+        <PrimaryButton testID="ob-plugins-cta" label="Done" onPress={finishOnboarding} />
+      </View>
+    );
   } else {
     body = (
       <View style={styles.verifying}>
@@ -626,6 +661,10 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+  },
+  pluginList: {
+    flex: 1,
+    marginBottom: 16,
   },
 
   /* connect */

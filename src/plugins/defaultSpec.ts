@@ -9,6 +9,8 @@ import { buildSeedItems, designFranchises } from '@/store/tracking';
 export function buildDefaultSpec(now: Date = new Date()): TrackingPluginSpec {
   return {
     id: 'tracking-demo',
+    title: 'Tracking',
+    description: 'The demo tracker — gacha banners, manga, and games you follow.',
     version: 1,
     data: {
       franchises: designFranchises.map((f) => ({ ...f })),
