@@ -20,7 +20,8 @@ import { clearSession, loadSession } from '@/api/session';
 import { useLiveSync } from '@/hooks/useLiveSync';
 import { useEvents } from '@/store/events';
 import { type DefaultView, useSettings } from '@/store/settings';
-import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 
 // Hold the splash screen until the fonts are ready, so the first frame the
 // user sees is already in Plus Jakarta Sans rather than the system face.
