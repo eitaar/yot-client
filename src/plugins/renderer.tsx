@@ -3,22 +3,38 @@ import { Pressable } from 'react-native';
 import { resolveComponent } from '@/plugins/catalog';
 import type { Condition, ElementNode } from '@/plugins/spec';
 
-/** Interpolate `{{path}}` against a flat context; unknown paths → "". */
-export function interpolate(template: string, ctx: Record<string, unknown>): string {
-  return template.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_m, path: string) => {
-    const val = path.split('.').reduce<unknown>(
-      (acc, k) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[k] : undefined),
-      ctx,
-    );
-    return val === undefined || val === null ? '' : String(val);
-  });
-}
-
 function getValue(field: string, ctx: Record<string, unknown>): unknown {
   return field.split('.').reduce<unknown>(
     (acc, k) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[k] : undefined),
     ctx,
   );
+}
+
+/**
+ * Interpolate `{{path}}` against a nested context (`item` / `derived` / `color`).
+ * A template that is a single `{{path}}` resolves to the raw value (preserving
+ * numbers/booleans for props); otherwise placeholders are stringified inline.
+ */
+export function interpolate(template: string, ctx: Record<string, unknown>): unknown {
+  const bare = template.match(/^\{\{\s*([\w.]+)\s*\}\}$/);
+  if (bare) return getValue(bare[1], ctx);
+  return template.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_m, path: string) => {
+    const v = getValue(path, ctx);
+    return v === undefined || v === null ? '' : String(v);
+  });
+}
+
+/** Interpolate any `{{...}}` inside string prop values (e.g. `progress`). */
+function interpolateProps(
+  props: Record<string, unknown> | undefined,
+  ctx: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!props) return undefined;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(props)) {
+    out[k] = typeof v === 'string' && v.includes('{{') ? interpolate(v, ctx) : v;
+  }
+  return out;
 }
 
 export function evalCondition(c: Condition, ctx: Record<string, unknown>): boolean {
@@ -49,12 +65,13 @@ export function renderTree(node: ElementNode, ctx: RenderContext): React.ReactEl
   const scope = { item: ctx.item, derived: ctx.derived, color: ctx.color };
   if (node.showIf && !evalCondition(node.showIf, scope)) return null;
 
-  const value = node.value ? interpolate(node.value, scope) : undefined;
+  const value = node.value ? String(interpolate(node.value, scope) ?? '') : undefined;
+  const props = interpolateProps(node.props, scope);
   const Component = resolveComponent(node.type);
   const onPress = node.action ? ctx.actions?.[node.action]?.run : undefined;
   const children = (node.children ?? []).map((c) => renderTree(c, ctx)).filter(Boolean) as React.ReactElement[];
 
-  const el = <Component value={value} props={node.props} color={ctx.color}>{children}</Component>;
+  const el = <Component value={value} props={props} color={ctx.color}>{children}</Component>;
   return onPress ? <Pressable onPress={onPress}>{el}</Pressable> : el;
 }
 
