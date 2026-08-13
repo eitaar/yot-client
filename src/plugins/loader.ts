@@ -1,6 +1,6 @@
 import { getJSON } from '@/api/client';
 import { buildDefaultSpec } from '@/plugins/defaultSpec';
-import { TrackingPluginSpecSchema, type TrackingPluginSpec } from '@/plugins/spec';
+import { TrackingPluginSpecSchema, type TrackingPluginSpec } from '@/plugins/schema';
 
 /**
  * Fetch the tracking spec from yot-server (`GET /api/plugins/tracking`), validate

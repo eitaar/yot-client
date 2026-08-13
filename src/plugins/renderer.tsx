@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { Pressable } from 'react-native';
 import { resolveComponent } from '@/plugins/catalog';
-import type { Condition, ElementNode } from '@/plugins/spec';
+import type { Condition, ElementNode } from '@/plugins/schema';
 
 function getValue(field: string, ctx: Record<string, unknown>): unknown {
   return field.split('.').reduce<unknown>(

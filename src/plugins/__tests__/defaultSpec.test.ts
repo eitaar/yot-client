@@ -3,7 +3,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 import { buildDefaultSpec } from '@/plugins/defaultSpec';
-import { TrackingPluginSpecSchema } from '@/plugins/spec';
+import { TrackingPluginSpecSchema } from '@/plugins/schema';
 
 describe('buildDefaultSpec', () => {
   it('parses against the schema', () => {

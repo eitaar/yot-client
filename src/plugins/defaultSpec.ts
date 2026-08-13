@@ -1,4 +1,4 @@
-import type { TrackingPluginSpec } from '@/plugins/spec';
+import type { TrackingPluginSpec } from '@/plugins/schema';
 import { buildSeedItems, designFranchises } from '@/store/tracking';
 
 /**

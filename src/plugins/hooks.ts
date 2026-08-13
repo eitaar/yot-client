@@ -8,7 +8,7 @@ import {
   timeLabel as defaultTimeLabel,
   type TrackingItem,
 } from '@/store/tracking';
-import type { DeriveSpec } from '@/plugins/spec';
+import type { DeriveSpec } from '@/plugins/schema';
 
 /** group(): default mode delegates to the existing pure function. */
 export function applyGroup(

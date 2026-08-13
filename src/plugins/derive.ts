@@ -1,5 +1,5 @@
 import { applyGroup, applyProgress, applyTimeLabel } from '@/plugins/hooks';
-import type { DeriveSpec } from '@/plugins/spec';
+import type { DeriveSpec } from '@/plugins/schema';
 import {
   describe,
   type TrackingDerived,

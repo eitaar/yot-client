@@ -1,4 +1,4 @@
-import { TrackingPluginSpecSchema } from '@/plugins/spec';
+import { TrackingPluginSpecSchema } from '@/plugins/schema';
 
 const valid = {
   id: 'tracking-demo', version: 1,

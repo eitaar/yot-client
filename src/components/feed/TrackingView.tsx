@@ -8,7 +8,7 @@ import { describeWithSpec, groupItemsBySpec } from '@/plugins/derive';
 import { buildDefaultSpec } from '@/plugins/defaultSpec';
 import { loadTrackingSpec } from '@/plugins/loader';
 import { renderTree, type RenderContext } from '@/plugins/renderer';
-import type { TrackingPluginSpec } from '@/plugins/spec';
+import type { TrackingPluginSpec } from '@/plugins/schema';
 import {
   activeFranchises,
   filteredItems,
