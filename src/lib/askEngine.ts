@@ -43,6 +43,8 @@ export interface AskAnswer {
 export interface AskOptions {
   /** Clock style for times inside answers. Defaults to 12h, as in v15. */
   timeFormat?: TimeFormat;
+  /** IANA zone for times inside answers; defaults to the device zone. */
+  timeZone?: string;
 }
 
 /** Working hours the design considers "bookable". */
@@ -153,6 +155,7 @@ export function answer(
   opts: AskOptions = {},
 ): AskAnswer {
   const timeFormat = opts.timeFormat ?? '12h';
+  const timeZone = opts.timeZone;
   const ctx = buildContext(events, now);
   const q = query.toLowerCase();
   const route: Route | undefined = ROUTES.find((key) => q.includes(key));
@@ -164,7 +167,7 @@ export function answer(
       return {
         text: sentences(
           `You have ${plural(todayEvents.length, 'event')} today.`,
-          first && `Starting with ${first.title} at ${fmtClock(first.start, timeFormat)}.`,
+          first && `Starting with ${first.title} at ${fmtClock(first.start, timeFormat, timeZone)}.`,
           `${freeHrs.length} free hours available.`,
         ),
         actions:
@@ -200,7 +203,7 @@ export function answer(
       if (!ev) return { text: 'Nothing upcoming.', actions: [], previewEventIds: [] };
       return {
         text: sentences(
-          `${ev.title} is at ${fmtClock(ev.start, timeFormat)} on ${format(ev.start, 'MMM d')}.`,
+          `${ev.title} is at ${fmtClock(ev.start, timeFormat, timeZone)} on ${format(ev.start, 'MMM d')}.`,
           ev.description || 'No notes added yet.',
         ),
         actions: [

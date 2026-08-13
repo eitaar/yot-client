@@ -29,6 +29,7 @@ export default function DynamicFeed({
   events,
   today,
   timeFormat,
+  timeZone,
   onOpen,
   scrollProps,
 }: FeedLayoutProps) {
@@ -103,7 +104,7 @@ export default function DynamicFeed({
                   style={styles.soonThumb}
                 >
                   <View style={styles.timeChip}>
-                    <Text style={styles.timeChipLabel}>{feedTimeLabel(event, timeFormat)}</Text>
+                    <Text style={styles.timeChipLabel}>{feedTimeLabel(event, timeFormat, timeZone)}</Text>
                   </View>
                 </EventThumb>
                 <View style={styles.soonCaption}>
@@ -152,6 +153,7 @@ export default function DynamicFeed({
                     {`${feedDateLabel(row.event.start, today)} · ${feedTimeLabel(
                       row.event,
                       timeFormat,
+                      timeZone,
                     )}`}
                   </Text>
                 </View>
@@ -163,6 +165,7 @@ export default function DynamicFeed({
                 event={row.a}
                 height={row.heights[0]}
                 timeFormat={timeFormat}
+                timeZone={timeZone}
                 onOpen={onOpen}
               />
               {row.b ? (
@@ -170,6 +173,7 @@ export default function DynamicFeed({
                   event={row.b}
                   height={row.heights[1]}
                   timeFormat={timeFormat}
+                  timeZone={timeZone}
                   onOpen={onOpen}
                 />
               ) : (
@@ -187,11 +191,13 @@ function PairCard({
   event,
   height,
   timeFormat,
+  timeZone,
   onOpen,
 }: {
   event: AppEvent;
   height: number;
   timeFormat: FeedLayoutProps['timeFormat'];
+  timeZone?: FeedLayoutProps['timeZone'];
   onOpen: (id: string) => void;
 }) {
   return (
@@ -215,7 +221,7 @@ function PairCard({
           {event.title}
         </Text>
         <Text style={styles.pairDate} numberOfLines={1}>
-          {feedShortLine(event, timeFormat)}
+          {feedShortLine(event, timeFormat, timeZone)}
         </Text>
       </View>
     </AppPressable>

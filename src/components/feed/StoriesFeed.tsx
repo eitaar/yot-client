@@ -20,6 +20,7 @@ export default function StoriesFeed({
   events,
   today,
   timeFormat,
+  timeZone,
   onOpen,
   scrollProps,
 }: FeedLayoutProps) {
@@ -90,7 +91,7 @@ export default function StoriesFeed({
                   {event.title}
                 </Text>
                 <Text style={styles.cardSub} numberOfLines={1}>
-                  {feedLongLine(event, today, timeFormat)}
+                  {feedLongLine(event, today, timeFormat, timeZone)}
                 </Text>
               </View>
             </EventThumb>

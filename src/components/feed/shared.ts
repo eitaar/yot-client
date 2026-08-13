@@ -11,6 +11,8 @@ export interface FeedLayoutProps {
   /** Midnight today — the pivot for "Today" / "Tomorrow" / "later". */
   today: Date;
   timeFormat: TimeFormat;
+  /** IANA zone for clock labels; defaults to the device zone. */
+  timeZone?: string;
   onOpen: (id: string) => void;
   /**
    * Spread onto the layout's outer `ScrollView` so the surrounding
@@ -32,16 +34,29 @@ export function feedDateLabel(date: Date, today: Date): string {
 }
 
 /** The design's `timeLabel`: the start time alone, e.g. "2:30 PM". */
-export function feedTimeLabel(event: AppEvent, timeFormat: TimeFormat): string {
-  return fmtClock(event.start, timeFormat);
+export function feedTimeLabel(
+  event: AppEvent,
+  timeFormat: TimeFormat,
+  timeZone?: string,
+): string {
+  return fmtClock(event.start, timeFormat, timeZone);
 }
 
 /** "Jul 16 · 2:30 PM" — the caption under a paired Dynamic card (line 561). */
-export function feedShortLine(event: AppEvent, timeFormat: TimeFormat): string {
-  return `${format(event.start, 'MMM d')} · ${feedTimeLabel(event, timeFormat)}`;
+export function feedShortLine(
+  event: AppEvent,
+  timeFormat: TimeFormat,
+  timeZone?: string,
+): string {
+  return `${format(event.start, 'MMM d')} · ${feedTimeLabel(event, timeFormat, timeZone)}`;
 }
 
 /** "Tomorrow · 2:30 PM" — the caption used by every other layout. */
-export function feedLongLine(event: AppEvent, today: Date, timeFormat: TimeFormat): string {
-  return `${feedDateLabel(event.start, today)} · ${feedTimeLabel(event, timeFormat)}`;
+export function feedLongLine(
+  event: AppEvent,
+  today: Date,
+  timeFormat: TimeFormat,
+  timeZone?: string,
+): string {
+  return `${feedDateLabel(event.start, today)} · ${feedTimeLabel(event, timeFormat, timeZone)}`;
 }
