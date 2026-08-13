@@ -450,7 +450,7 @@ spec (JSON)
 ## 13. File Map (implementation targets)
 
 **yot-client**
-- `src/plugins/spec.ts` — zod schema + types (§3, §4.1, §5).
+- `src/plugins/schema.ts` — zod schema + types (§3, §4.1, §5).
 - `src/plugins/hooks.ts` — derive hook implementations (§3.2).
 - `src/plugins/catalog.tsx` — component catalog (§4.3).
 - `src/plugins/renderer.tsx` — element-tree renderer + interpolation + showIf (§4, §10).
