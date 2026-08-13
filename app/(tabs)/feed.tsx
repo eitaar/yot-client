@@ -104,7 +104,7 @@ export default function FeedScreen() {
         options={MODES}
         value={mode}
         onChange={setMode}
-        labelFor={(m) => MODE_LABELS[m]}
+        labelFor={(m) => (m === 'tracking' ? (activeTitle ?? 'Tracking') : MODE_LABELS[m])}
         accessibilityLabel="Feed mode"
         style={styles.modes}
       />
