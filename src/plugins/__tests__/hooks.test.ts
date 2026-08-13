@@ -1,0 +1,42 @@
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
+import { addDays, startOfDay } from 'date-fns';
+import { applyGroup, applyProgress, applyTimeLabel } from '@/plugins/hooks';
+import { group, progress, timeLabel, type TrackingItem } from '@/store/tracking';
+
+const NOW = new Date('2026-07-28T15:30:00');
+const item = (o: Partial<TrackingItem>): TrackingItem => ({
+  id: 'x', title: 'X', franchise: 'G', type: 'gacha',
+  start: startOfDay(NOW), end: startOfDay(NOW), desc: '', ...o,
+});
+
+describe('derive hooks', () => {
+  it('default group matches the pure function', () => {
+    expect(applyGroup(undefined, item({ start: null }), NOW)).toBe(group(item({ start: null }), NOW));
+  });
+  it('deadline mode groups within threshold as This Week', () => {
+    expect(applyGroup({ mode: 'deadline', thresholdDays: 7 }, item({ start: addDays(startOfDay(NOW), 3) }), NOW)).toBe('This Week');
+  });
+  it('category mode groups by field', () => {
+    const it = item({}) as unknown as Record<string, unknown>;
+    it.magazine = 'Jump';
+    expect(applyGroup({ mode: 'category', field: 'magazine' }, it as unknown as TrackingItem, NOW)).toBe('Jump');
+  });
+  it('index progress computes current/total', () => {
+    const it = item({}) as unknown as Record<string, unknown>;
+    it.round = 6; it.totalRounds = 24;
+    expect(applyProgress({ mode: 'index', currentField: 'round', totalField: 'totalRounds' }, it as unknown as TrackingItem, NOW)).toBeCloseTo(0.25);
+  });
+  it('ratio progress computes done/total', () => {
+    const it = item({}) as unknown as Record<string, unknown>;
+    it.done = 3; it.total = 10;
+    expect(applyProgress({ mode: 'ratio', doneField: 'done', totalField: 'total' }, it as unknown as TrackingItem, NOW)).toBeCloseTo(0.3);
+  });
+  it('default progress/timeLabel match the pure functions', () => {
+    const it = item({ end: addDays(startOfDay(NOW), 3) });
+    expect(applyProgress(undefined, it, NOW)).toBe(progress(it, NOW));
+    expect(applyTimeLabel(undefined, it, NOW)).toBe(timeLabel(it, NOW));
+  });
+});
