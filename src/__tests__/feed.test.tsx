@@ -9,6 +9,7 @@ import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import type { AppEvent } from '@/api/types';
 import { buildInsights } from '@/lib/askEngine';
 import { useEvents } from '@/store/events';
+import { usePlugins } from '@/store/plugins';
 import { useSettings, type FeedLayout } from '@/store/settings';
 import { buildSeedItems, designFranchises, useTracking } from '@/store/tracking';
 import FeedScreen from '../../app/(tabs)/feed';
@@ -96,6 +97,12 @@ function seedTracking() {
   });
 }
 
+function seedPlugins() {
+  usePlugins.setState({
+    added: [{ id: 'tracking-demo', title: 'Tracking', description: 'Demo', version: 1 }],
+  });
+}
+
 function renderScreen() {
   return render(
     <SafeAreaProvider initialMetrics={METRICS}>
@@ -107,6 +114,7 @@ function renderScreen() {
 beforeEach(() => {
   seedEvents(EVENTS);
   seedTracking();
+  seedPlugins();
   useSettings.setState({ feedLayout: 'dynamic', timeFormat: '12h' });
 });
 

@@ -11,7 +11,7 @@ const TRACK = { id: 'tracking-demo', title: 'Tracking', description: 'Demo', ver
 describe('usePlugins', () => {
   beforeEach(() => {
     act(() => {
-      usePlugins.setState({ added: [], activeId: null, activeTitle: null });
+      usePlugins.setState({ added: [] });
     });
   });
 
@@ -23,30 +23,26 @@ describe('usePlugins', () => {
     expect(usePlugins.getState().added).toEqual([F1]);
   });
 
-  it('removes a plugin and clears active if it was active', () => {
+  it('removes a plugin', () => {
     act(() => {
-      usePlugins.setState({ added: [F1], activeId: 'f1-2026', activeTitle: 'F1 2026' });
+      usePlugins.setState({ added: [F1] });
       usePlugins.getState().remove('f1-2026');
     });
     expect(usePlugins.getState().added).toEqual([]);
-    expect(usePlugins.getState().activeId).toBeNull();
-    expect(usePlugins.getState().activeTitle).toBeNull();
   });
 
-  it('keeps active when removing a different plugin', () => {
-    act(() => {
-      usePlugins.setState({ added: [F1, TRACK], activeId: 'f1-2026', activeTitle: 'F1 2026' });
-      usePlugins.getState().remove('tracking-demo');
-    });
-    expect(usePlugins.getState().activeId).toBe('f1-2026');
+  it('toggles a plugin on then off', () => {
+    act(() => usePlugins.getState().toggle(F1));
     expect(usePlugins.getState().added).toEqual([F1]);
+    act(() => usePlugins.getState().toggle(F1));
+    expect(usePlugins.getState().added).toEqual([]);
   });
 
-  it('sets the active plugin', () => {
+  it('toggle adds different plugins independently', () => {
     act(() => {
-      usePlugins.getState().setActive('f1-2026', 'F1 2026');
+      usePlugins.getState().toggle(F1);
+      usePlugins.getState().toggle(TRACK);
     });
-    expect(usePlugins.getState().activeId).toBe('f1-2026');
-    expect(usePlugins.getState().activeTitle).toBe('F1 2026');
+    expect(usePlugins.getState().added).toEqual([F1, TRACK]);
   });
 });

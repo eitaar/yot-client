@@ -2,9 +2,8 @@
  * Client-side plugin "install" state, persisted to AsyncStorage.
  *
  * `added` holds full metadata for the plugins the user has selected (from the
- * server list, or onboarding), so titles are available offline. `activeId` +
- * `activeTitle` remember which plugin is currently shown — the feed header
- * reflects the active title.
+ * server list, or onboarding), so titles are available offline. The feed's
+ * segmented control renders one segment per added plugin.
  */
 
 import { create } from 'zustand';
@@ -15,14 +14,12 @@ import { persistStorage } from '@/store/storage';
 
 export interface PluginsState {
   added: PluginMeta[];
-  activeId: string | null;
-  activeTitle: string | null;
 }
 
 export interface PluginsActions {
   add: (meta: PluginMeta) => void;
   remove: (id: string) => void;
-  setActive: (id: string, title: string) => void;
+  toggle: (meta: PluginMeta) => void;
 }
 
 export type PluginsStore = PluginsState & PluginsActions;
@@ -33,20 +30,18 @@ export const usePlugins = create<PluginsStore>()(
   persist(
     (set) => ({
       added: [],
-      activeId: null,
-      activeTitle: null,
 
       add: (meta) =>
         set((s) => (s.added.some((a) => a.id === meta.id) ? s : { added: [...s.added, meta] })),
 
-      remove: (id) =>
-        set((s) => ({
-          added: s.added.filter((a) => a.id !== id),
-          activeId: s.activeId === id ? null : s.activeId,
-          activeTitle: s.activeId === id ? null : s.activeTitle,
-        })),
+      remove: (id) => set((s) => ({ added: s.added.filter((a) => a.id !== id) })),
 
-      setActive: (id, title) => set({ activeId: id, activeTitle: title }),
+      toggle: (meta) =>
+        set((s) =>
+          s.added.some((a) => a.id === meta.id)
+            ? { added: s.added.filter((a) => a.id !== meta.id) }
+            : { added: [...s.added, meta] },
+        ),
     }),
     {
       name: PLUGINS_STORAGE_KEY,

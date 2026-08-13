@@ -32,7 +32,6 @@ import PluginPicker from '@/components/feed/PluginPicker';
 import { listPlugins } from '@/plugins/loader';
 import type { PluginMeta } from '@/plugins/schema';
 import { useEvents } from '@/store/events';
-import { usePlugins } from '@/store/plugins';
 import { useSettings } from '@/store/settings';
 import { colors, easing, fonts, radii, springs } from '@/theme/tokens';
 
@@ -291,8 +290,6 @@ export default function OnboardingScreen() {
   const [verifyDone, setVerifyDone] = useState(false);
 
   const [allPlugins, setAllPlugins] = useState<PluginMeta[]>([]);
-  const addedPlugins = usePlugins((s) => s.added);
-  const availablePlugins = allPlugins.filter((p) => !addedPlugins.some((a) => a.id === p.id));
 
   const probeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Guards against a slow probe landing after a newer keystroke. */
@@ -557,7 +554,7 @@ export default function OnboardingScreen() {
           Add the tracking plugins you want to follow. You can add more later.
         </Text>
         <ScrollView style={styles.pluginList}>
-          <PluginPicker available={availablePlugins} />
+          <PluginPicker plugins={allPlugins} />
         </ScrollView>
         <PrimaryButton testID="ob-plugins-cta" label="Done" onPress={finishOnboarding} />
       </View>
