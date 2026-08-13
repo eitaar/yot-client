@@ -94,6 +94,8 @@ export type ActionDef = z.infer<typeof ActionDefSchema>;
 /* ---- spec ---- */
 export const TrackingPluginSpecSchema = z.object({
   id: z.string(),
+  title: z.string(),
+  description: z.string(),
   version: z.number().int().positive(),
   data: DataSourceSchema,
   derive: DeriveSpecSchema.optional(),
@@ -102,3 +104,12 @@ export const TrackingPluginSpecSchema = z.object({
   actions: z.record(z.string(), ActionDefSchema).optional(),
 });
 export type TrackingPluginSpec = z.infer<typeof TrackingPluginSpecSchema>;
+
+/* ---- plugin list metadata (GET /api/plugins) ---- */
+export const PluginMetaSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  version: z.number().int().positive(),
+});
+export type PluginMeta = z.infer<typeof PluginMetaSchema>;

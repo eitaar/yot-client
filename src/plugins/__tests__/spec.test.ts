@@ -1,7 +1,10 @@
 import { TrackingPluginSpecSchema } from '@/plugins/schema';
 
 const valid = {
-  id: 'tracking-demo', version: 1,
+  id: 'tracking-demo',
+  title: 'Tracking',
+  description: 'Demo tracker',
+  version: 1,
   data: {
     franchises: [{ name: 'Genshin Impact', abbr: 'GI', color: '#E8453C' }],
     items: [{ id: 't1', title: 'X', franchise: 'Genshin Impact', type: 'gacha', start: '2026-07-28', end: null, desc: '' }],

@@ -1,8 +1,10 @@
 import { getJSON } from '@/api/client';
 import { buildDefaultSpec, DEFAULT_SPEC_ID } from '@/plugins/defaultSpec';
 import {
+  PluginMetaSchema,
   TrackingPluginSpecSchema,
   type Franchise,
+  type PluginMeta,
   type TrackingPluginSpec,
 } from '@/plugins/schema';
 import type { TrackingItem } from '@/store/tracking';
@@ -21,17 +23,23 @@ export async function loadPluginSpec(id: string, now: Date = new Date()): Promis
   }
 }
 
-/** List the plugin ids the server exposes (`GET /api/plugins`). */
-export async function listPlugins(): Promise<string[]> {
+/** List the plugin metadata the server exposes (`GET /api/plugins`). */
+export async function listPlugins(): Promise<PluginMeta[]> {
   try {
     const raw = (await getJSON('/plugins')) as { plugins?: unknown } | null;
     if (raw && Array.isArray(raw.plugins)) {
-      return raw.plugins.filter((p): p is string => typeof p === 'string');
+      const metas: PluginMeta[] = [];
+      for (const p of raw.plugins) {
+        const parsed = PluginMetaSchema.safeParse(p);
+        if (parsed.success) metas.push(parsed.data);
+      }
+      return metas;
     }
   } catch {
-    // fall through to the default
+    // fall through to the offline default
   }
-  return [DEFAULT_SPEC_ID];
+  const d = buildDefaultSpec();
+  return [{ id: d.id, title: d.title, description: d.description, version: d.version }];
 }
 
 /** Resolved plugin data — items with real `Date` objects (and extra fields). */

@@ -7,6 +7,8 @@ import type { TrackingPluginSpec } from '@/plugins/schema';
  */
 export const f12026Spec: TrackingPluginSpec = {
   id: 'f1-2026',
+  title: 'F1 2026',
+  description: 'Formula 1 season tracker — round progress and race dates.',
   version: 1,
   data: {
     franchises: [{ name: 'Formula 1', abbr: 'F1', color: '#E10600' }],

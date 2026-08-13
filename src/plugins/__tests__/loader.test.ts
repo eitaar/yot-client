@@ -10,7 +10,13 @@ import { listPlugins, loadPluginSpec, resolveSpecData } from '@/plugins/loader';
 
 describe('loadPluginSpec', () => {
   it('returns the server spec when valid', async () => {
-    (getJSON as jest.Mock).mockResolvedValue({ id: 'server-spec', version: 1, data: { fetch: 'https://x.example/y.json' } });
+    (getJSON as jest.Mock).mockResolvedValue({
+      id: 'server-spec',
+      title: 'Server Spec',
+      description: 'A server-provided spec.',
+      version: 1,
+      data: { fetch: 'https://x.example/y.json' },
+    });
     const spec = await loadPluginSpec('server-spec');
     expect(spec.id).toBe('server-spec');
   });
@@ -29,14 +35,32 @@ describe('loadPluginSpec', () => {
 });
 
 describe('listPlugins', () => {
-  it('returns the server list', async () => {
-    (getJSON as jest.Mock).mockResolvedValue({ plugins: ['tracking-demo', 'f1-2026'] });
-    expect(await listPlugins()).toEqual(['tracking-demo', 'f1-2026']);
+  it('returns the server metadata list', async () => {
+    (getJSON as jest.Mock).mockResolvedValue({
+      plugins: [
+        { id: 'tracking-demo', title: 'Tracking', description: 'Demo', version: 1 },
+        { id: 'f1-2026', title: 'F1 2026', description: 'F1 season', version: 1 },
+      ],
+    });
+    const metas = await listPlugins();
+    expect(metas).toHaveLength(2);
+    expect(metas[1]).toMatchObject({ id: 'f1-2026', title: 'F1 2026' });
+  });
+
+  it('skips invalid entries', async () => {
+    (getJSON as jest.Mock).mockResolvedValue({
+      plugins: [
+        { id: 'good', title: 'Good', description: '', version: 1 },
+        { id: 42 },
+      ],
+    });
+    expect(await listPlugins()).toEqual([{ id: 'good', title: 'Good', description: '', version: 1 }]);
   });
 
   it('falls back to the default on failure', async () => {
     (getJSON as jest.Mock).mockRejectedValue(new Error('network'));
-    expect(await listPlugins()).toEqual(['tracking-demo']);
+    const metas = await listPlugins();
+    expect(metas[0].id).toBe('tracking-demo');
   });
 });
 
