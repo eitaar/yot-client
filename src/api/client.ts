@@ -550,6 +550,11 @@ export async function listCalendars(): Promise<Calendar[]> {
   return expectArray<Calendar>(await authed<unknown>('/calendars'));
 }
 
+/** Authed GET returning raw parsed JSON (the caller validates the shape). */
+export async function getJSON(path: string): Promise<unknown> {
+  return authed<unknown>(path);
+}
+
 function buildQuery(query: ListEventsQuery): string {
   const params: string[] = [];
   const push = (k: string, v: string | number | undefined) => {
