@@ -29,4 +29,40 @@ describe('renderTree', () => {
     );
     expect(getByText('Arlecchino')).toBeTruthy();
   });
+
+  it('renders a flight route (origin / destination / plane)', async () => {
+    const { getByText } = await render(
+      renderTree(
+        { type: 'Route', props: { origin: '{{item.origin}}', destination: '{{item.destination}}', progress: '{{derived.progress}}' } },
+        { item: { origin: 'HND', destination: 'SFO' }, derived: { progress: 0 }, color: '#0066B3' },
+      )!,
+    );
+    expect(getByText('HND')).toBeTruthy();
+    expect(getByText('SFO')).toBeTruthy();
+  });
+
+  it('renders a badge with a variant', async () => {
+    const { getByText } = await render(
+      renderTree({ type: 'Badge', value: 'On time', props: { variant: 'success' } }, { item: {}, derived: {} })!,
+    );
+    expect(getByText('On time')).toBeTruthy();
+  });
+
+  it('renders a card with a title', async () => {
+    const { getByText } = await render(
+      renderTree(
+        { type: 'Card', children: [{ type: 'CardTitle', value: 'HND → SFO' }] },
+        { item: {}, derived: {} },
+      )!,
+    );
+    expect(getByText('HND → SFO')).toBeTruthy();
+  });
+
+  it('renders an inline svg', async () => {
+    const svg = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>';
+    const { toJSON } = await render(
+      renderTree({ type: 'Svg', props: { svg, width: 24, height: 24 } }, { item: {}, derived: {} })!,
+    );
+    expect(toJSON()).toBeTruthy();
+  });
 });
