@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, type } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
+import { type } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 export interface PlaceholderProps {
   /** Screen name, so it is obvious which route resolved. */
@@ -14,6 +17,9 @@ export interface PlaceholderProps {
  * not built yet. Replaced stage by stage.
  */
 export default function Placeholder({ name, detail }: PlaceholderProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{name}</Text>
@@ -22,23 +28,24 @@ export default function Placeholder({ name, detail }: PlaceholderProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.canvas,
-    padding: 24,
-    gap: 6,
-  },
-  title: {
-    ...type.screenTitle,
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  detail: {
-    ...type.rowSubtitle,
-    color: colors.muted,
-    textAlign: 'center',
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.canvas,
+      padding: 24,
+      gap: 6,
+    },
+    title: {
+      ...type.screenTitle,
+      color: colors.ink,
+      textAlign: 'center',
+    },
+    detail: {
+      ...type.rowSubtitle,
+      color: colors.muted,
+      textAlign: 'center',
+    },
+  });

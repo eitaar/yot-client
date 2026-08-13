@@ -39,7 +39,9 @@ import {
   type PullPhase,
 } from '@/lib/pullToSync';
 import { useEvents } from '@/store/events';
-import { colors, easing } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
+import { easing } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * Pull-to-sync (design lines 1112-1142; behaviour settled in chat12).
@@ -103,6 +105,8 @@ export default function PullToSync({
   testID,
   scrollTestID,
 }: PullToSyncProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scrollRef = useAnimatedRef<ScrollView>();
   const containerRef = useRef<View | null>(null);
 
@@ -366,8 +370,9 @@ export default function PullToSync({
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
     flex: 1,
     minHeight: 0,
   },

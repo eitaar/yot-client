@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import AppPressable from '@/components/AppPressable';
 import { GearIcon } from '@/components/icons';
-import { colors, type } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
+import { type } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 export interface ScreenHeaderProps {
   /** 26/800 screen title ("Upcoming", "Feed", "Tracking"). */
@@ -28,6 +30,8 @@ export default function ScreenHeader({
   style,
   testID,
 }: ScreenHeaderProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -53,29 +57,30 @@ export default function ScreenHeader({
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    // design: `padding: 16px 24px 6px`
-    paddingTop: 16,
-    paddingHorizontal: 24,
-    paddingBottom: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    ...type.screenTitle,
-    color: colors.ink,
-  },
-  gear: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  gearHovered: {
-    backgroundColor: colors.hairline,
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    header: {
+      // design: `padding: 16px 24px 6px`
+      paddingTop: 16,
+      paddingHorizontal: 24,
+      paddingBottom: 6,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    title: {
+      ...type.screenTitle,
+      color: colors.ink,
+    },
+    gear: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    gearHovered: {
+      backgroundColor: colors.hairline,
+    },
+  });
