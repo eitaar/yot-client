@@ -28,6 +28,9 @@ import SectionLabel from '@/components/SectionLabel';
 import SegmentedControl from '@/components/SegmentedControl';
 import Toggle from '@/components/Toggle';
 import { BackChevronIcon, CheckIcon, ChevronRightIcon } from '@/components/icons';
+import PluginPicker from '@/components/feed/PluginPicker';
+import { listPlugins } from '@/plugins/loader';
+import type { PluginMeta } from '@/plugins/schema';
 import { formatByteSize, utf8ByteLength } from '@/lib/bytes';
 import { EVENTS_CACHE_KEY, useEvents } from '@/store/events';
 import {
@@ -389,6 +392,7 @@ export default function SettingsScreen() {
   const [confirming, setConfirming] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [cacheSize, setCacheSize] = useState<string | null>(null);
+  const [allPlugins, setAllPlugins] = useState<PluginMeta[]>([]);
 
   /* ------------------------------------------------------------ cache size */
 
@@ -411,6 +415,18 @@ export default function SettingsScreen() {
     })();
     // Re-measure after a sync: the row is only honest if it tracks the data.
   }, [lastSyncAt]);
+
+  /* ------------------------------------------------------------- plugins */
+
+  useEffect(() => {
+    let alive = true;
+    listPlugins().then((metas) => {
+      if (alive) setAllPlugins(metas);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   /* ------------------------------------------------------------ disconnect */
 
@@ -581,6 +597,12 @@ export default function SettingsScreen() {
             />
           }
         />
+
+        {/* ------------------------------------------------------ plugins -- */}
+        <FadeUp delay={STAGGER_MS * 9}>
+          <SectionLabel style={styles.section}>Plugins</SectionLabel>
+        </FadeUp>
+        <PluginPicker plugins={allPlugins} />
 
         {/* --------------------------------------------------------- data -- */}
         <FadeUp delay={STAGGER_MS * 9}>

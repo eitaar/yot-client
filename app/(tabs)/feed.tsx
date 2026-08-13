@@ -15,6 +15,7 @@ import StoriesFeed from '@/components/feed/StoriesFeed';
 import TrackingView from '@/components/feed/TrackingView';
 import type { FeedLayoutProps } from '@/components/feed/shared';
 import { upcoming, useEvents } from '@/store/events';
+import { usePlugins } from '@/store/plugins';
 import {
   useEffectiveTimeZone,
   useFeedLayout,
@@ -22,29 +23,16 @@ import {
   type FeedLayout,
 } from '@/store/settings';
 import { useTracking } from '@/store/tracking';
-import { usePlugins } from '@/store/plugins';
 import { colors } from '@/theme/tokens';
 
 /**
- * The Feed tab (design lines 981-988) — one header and a three-way segmented
- * control over three quite different panes:
- *
- *  - **Feed**    — four layouts, chosen by the Settings "Feed layout" row;
- *  - **Ask**     — the canned assistant;
- *  - **Tracking**— the local demo tracker.
- *
- * The title follows the mode, exactly as the prototype's did: "Tracking" in
- * tracking mode, "Feed" otherwise.
+ * The Feed tab (design lines 981-988) — one header and a segmented control.
+ * The two built-in panes (Feed, Ask) sit beside one segment per installed
+ * plugin; each plugin segment renders its own tracking content.
  */
 
-const MODES = ['feed', 'ask', 'tracking'] as const;
-type Mode = (typeof MODES)[number];
-
-const MODE_LABELS: Record<Mode, string> = {
-  feed: 'Feed',
-  ask: 'Ask',
-  tracking: 'Tracking',
-};
+const FEED = 'feed';
+const ASK = 'ask';
 
 const LAYOUTS: Record<FeedLayout, (props: FeedLayoutProps) => React.ReactElement> = {
   dynamic: DynamicFeed,
@@ -59,7 +47,23 @@ export default function FeedScreen() {
   const timeZone = useEffectiveTimeZone();
   const feedLayout = useFeedLayout();
 
-  const [mode, setMode] = useState<Mode>('feed');
+  const added = usePlugins((s) => s.added);
+  const [mode, setMode] = useState<string>(FEED);
+
+  // Segments: Feed, Ask, then one per installed plugin (by id).
+  const segments = useMemo(() => [FEED, ASK, ...added.map((p) => p.id)], [added]);
+
+  // If the active mode was a plugin that got removed, fall back to Feed.
+  useEffect(() => {
+    if (mode !== FEED && mode !== ASK && !added.some((p) => p.id === mode)) {
+      setMode(FEED);
+    }
+  }, [added, mode]);
+
+  const labelFor = (m: string): string =>
+    m === FEED ? 'Feed' : m === ASK ? 'Ask' : (added.find((p) => p.id === m)?.title ?? m);
+
+  const isPlugin = mode !== FEED && mode !== ASK;
 
   // Same day-rollover guard as the Events tab: "Today" must stop meaning
   // yesterday if the app is left open past midnight.
@@ -73,9 +77,6 @@ export default function FeedScreen() {
   }, []);
 
   const events = useEvents((s) => upcoming(s, today));
-
-  // The active plugin's title drives the header in tracking mode.
-  const activeTitle = usePlugins((s) => s.activeTitle);
 
   // The tracking dataset is seeded lazily; the pane is one tap away, so the
   // seed happens on mount rather than when the tab is switched.
@@ -98,28 +99,24 @@ export default function FeedScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]} testID="feed-screen">
-      <ScreenHeader title={mode === 'tracking' ? (activeTitle ?? 'Tracking') : 'Feed'} testID="feed-header" />
+      <ScreenHeader title={labelFor(mode)} testID="feed-header" />
 
       <SegmentedControl
-        options={MODES}
+        options={segments}
         value={mode}
         onChange={setMode}
-        labelFor={(m) => (m === 'tracking' ? (activeTitle ?? 'Tracking') : MODE_LABELS[m])}
+        labelFor={labelFor}
         accessibilityLabel="Feed mode"
         style={styles.modes}
       />
 
-      {/*
-        Feed and Tracking pull to sync; Ask does not. Ask is a conversation
-        pinned to the bottom of its pane — a pull there would fight the
-        keyboard and refresh nothing the user is looking at.
-      */}
-      {mode === 'feed' ? (
+      {/* Feed and plugin panes pull to sync; Ask does not. */}
+      {mode === FEED ? (
         <PullToSync testID="feed-pull">
           {(scrollProps) => <Layout {...layoutProps} scrollProps={scrollProps} />}
         </PullToSync>
       ) : null}
-      {mode === 'ask' ? (
+      {mode === ASK ? (
         <AskView
           events={events}
           timeFormat={timeFormat}
@@ -127,10 +124,11 @@ export default function FeedScreen() {
           onOpenEvent={(id) => router.push(`/event/${id}`)}
         />
       ) : null}
-      {mode === 'tracking' ? (
+      {isPlugin ? (
         <PullToSync testID="tracking-pull">
           {(scrollProps) => (
             <TrackingView
+              pluginId={mode}
               onOpenItem={(id) => router.push(`/tracking/${id}`)}
               scrollProps={scrollProps}
             />
