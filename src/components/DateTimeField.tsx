@@ -2,12 +2,14 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import AppPressable from '@/components/AppPressable';
 import type { TimeFormat } from '@/lib/dates';
-import { colors, fonts, radii } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts, radii } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * A date or time field for the edit sheet.
@@ -77,6 +79,8 @@ export default function DateTimeField({
   style,
   testID,
 }: DateTimeFieldProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [open, setOpen] = useState(false);
 
   const display =
@@ -107,7 +111,7 @@ export default function DateTimeField({
             const next = parseInput(e.target.value, value, mode);
             if (next) onChange(next);
           }}
-          style={webInputStyle}
+          style={webInputStyle(colors)}
         />
       ) : (
         <>
@@ -143,43 +147,45 @@ export default function DateTimeField({
  * to be named outright: `inherit` picks up the UA default on a form control,
  * not the app's face.
  */
-const webInputStyle = {
-  width: '100%',
-  padding: '12px 14px',
-  fontSize: 15,
-  fontFamily: `${fonts.regular}, system-ui, sans-serif`,
-  color: colors.ink,
-  border: `1.5px solid ${colors.fieldBorder}`,
-  borderRadius: radii.field,
-  outline: 'none',
-  boxSizing: 'border-box',
-  background: colors.fieldBg,
-} as const;
-
-const styles = StyleSheet.create({
-  field: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 11,
-    fontFamily: fonts.bold,
-    color: colors.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 6,
-  },
-  control: {
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: colors.fieldBorder,
-    borderRadius: radii.field,
-    backgroundColor: colors.fieldBg,
-    justifyContent: 'center',
-  },
-  value: {
+const webInputStyle = (colors: Colors) =>
+  ({
+    width: '100%',
+    padding: '12px 14px',
     fontSize: 15,
-    fontFamily: fonts.regular,
+    fontFamily: `${fonts.regular}, system-ui, sans-serif`,
     color: colors.ink,
-  },
-});
+    border: `1.5px solid ${colors.fieldBorder}`,
+    borderRadius: radii.field,
+    outline: 'none',
+    boxSizing: 'border-box',
+    background: colors.fieldBg,
+  }) as const;
+
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    field: {
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: 11,
+      fontFamily: fonts.bold,
+      color: colors.muted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: 6,
+    },
+    control: {
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      borderWidth: 1.5,
+      borderColor: colors.fieldBorder,
+      borderRadius: radii.field,
+      backgroundColor: colors.fieldBg,
+      justifyContent: 'center',
+    },
+    value: {
+      fontSize: 15,
+      fontFamily: fonts.regular,
+      color: colors.ink,
+    },
+  });

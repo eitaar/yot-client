@@ -11,7 +11,9 @@ import {
   feedTimeLabel,
   type FeedLayoutProps,
 } from '@/components/feed/shared';
-import { colors, fonts } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * Feed layout A — **Dynamic** (design lines 516-580).
@@ -33,6 +35,8 @@ export default function DynamicFeed({
   onOpen,
   scrollProps,
 }: FeedLayoutProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { soon, rows } = useMemo(() => {
     const soonEvents: AppEvent[] = [];
     const later: AppEvent[] = [];
@@ -200,6 +204,8 @@ function PairCard({
   timeZone?: FeedLayoutProps['timeZone'];
   onOpen: (id: string) => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <AppPressable
       variant="button"
@@ -228,8 +234,9 @@ function PairCard({
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: {
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    scroll: {
     flex: 1,
   },
   content: {
@@ -279,7 +286,8 @@ const styles = StyleSheet.create({
   timeChipLabel: {
     fontSize: 10,
     fontFamily: fonts.bold,
-    color: colors.ink,
+    // Always dark: it sits on the white chip over the thumbnail.
+    color: '#0F0F0F',
   },
   soonCaption: {
     paddingTop: 8,

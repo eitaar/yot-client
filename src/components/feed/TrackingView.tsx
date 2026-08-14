@@ -10,7 +10,9 @@ import { loadPluginSpec, resolveSpecData, type ResolvedTrackingData } from '@/pl
 import { renderTree, type RenderContext } from '@/plugins/renderer';
 import type { TrackingPluginSpec } from '@/plugins/schema';
 import { compareTrackingItems, type TrackingItem } from '@/store/tracking';
-import { colors, fonts } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * The Tracking pane (design lines 818-931).
@@ -28,6 +30,8 @@ export interface TrackingViewProps {
 }
 
 export default function TrackingView({ pluginId, onOpenItem, scrollProps }: TrackingViewProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [franchise, setFranchise] = useState<string | null>(null);
 
   const now = useMemo(() => new Date(), []);
@@ -78,6 +82,7 @@ export default function TrackingView({ pluginId, onOpenItem, scrollProps }: Trac
       item: { ...rec, start: item.start?.getTime() ?? null, end: item.end?.getTime() ?? null },
       derived: derived as unknown as Record<string, unknown>,
       color: franchiseColor(item.franchise),
+      colors,
     };
   };
 
@@ -158,6 +163,8 @@ function Pill({
   onPress: () => void;
   testID: string;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <AppPressable
       variant="button"
@@ -172,82 +179,83 @@ function Pill({
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    minHeight: 0,
-  },
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      minHeight: 0,
+    },
 
-  loading: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 48,
-  },
+    loading: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: 48,
+    },
 
-  filterBar: {
-    paddingTop: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineStrong,
-    flexShrink: 0,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 24,
-  },
-  pill: {
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: colors.hairline,
-    flexShrink: 0,
-  },
-  pillSelected: {
-    backgroundColor: colors.ink,
-  },
-  pillLabel: {
-    fontSize: 12,
-    fontFamily: fonts.semibold,
-    color: colors.muted,
-    letterSpacing: 0.2,
-  },
-  pillLabelSelected: {
-    color: colors.canvas,
-  },
+    filterBar: {
+      paddingTop: 12,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.hairlineStrong,
+      flexShrink: 0,
+    },
+    filterRow: {
+      flexDirection: 'row',
+      gap: 6,
+      paddingHorizontal: 24,
+    },
+    pill: {
+      paddingVertical: 5,
+      paddingHorizontal: 12,
+      borderRadius: 20,
+      backgroundColor: colors.hairline,
+      flexShrink: 0,
+    },
+    pillSelected: {
+      backgroundColor: colors.ink,
+    },
+    pillLabel: {
+      fontSize: 12,
+      fontFamily: fonts.semibold,
+      color: colors.muted,
+      letterSpacing: 0.2,
+    },
+    pillLabelSelected: {
+      color: colors.canvas,
+    },
 
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingTop: 4,
-    paddingBottom: 20,
-  },
-  group: {
-    paddingHorizontal: 24,
-  },
-  groupHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-    paddingTop: 18,
-    paddingBottom: 10,
-  },
-  groupLabel: {
-    fontSize: 13,
-    fontFamily: fonts.bold,
-    color: colors.ink,
-  },
+    scroll: {
+      flex: 1,
+    },
+    content: {
+      paddingTop: 4,
+      paddingBottom: 20,
+    },
+    group: {
+      paddingHorizontal: 24,
+    },
+    groupHeader: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: 8,
+      paddingTop: 18,
+      paddingBottom: 10,
+    },
+    groupLabel: {
+      fontSize: 13,
+      fontFamily: fonts.bold,
+      color: colors.ink,
+    },
 
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingVertical: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairline,
-  },
-  rowNoHairline: {
-    borderBottomWidth: 0,
-  },
-});
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      paddingVertical: 13,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.hairline,
+    },
+    rowNoHairline: {
+      borderBottomWidth: 0,
+    },
+  });

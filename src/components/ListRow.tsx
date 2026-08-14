@@ -1,9 +1,11 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import AppPressable from '@/components/AppPressable';
 import { ChevronRightIcon } from '@/components/icons';
-import { colors, layout, type } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { layout, type } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 export interface ListRowProps {
   title: string;
@@ -37,6 +39,8 @@ export default function ListRow({
   style,
   testID,
 }: ListRowProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const withChevron = showChevron ?? !!onPress;
 
   return (
@@ -70,35 +74,36 @@ export default function ListRow({
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingVertical: 13,
-  },
-  hairline: {
-    // The design specifies `1px solid`, not a device hairline.
-    borderBottomWidth: layout.hairlineWidth,
-    borderBottomColor: colors.hairline,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    flexShrink: 0,
-  },
-  text: {
-    flex: 1,
-    minWidth: 0,
-  },
-  title: {
-    ...type.rowTitle,
-    color: colors.ink,
-  },
-  subtitle: {
-    ...type.rowSubtitle,
-    color: colors.muted,
-    marginTop: 3,
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      paddingVertical: 13,
+    },
+    hairline: {
+      // The design specifies `1px solid`, not a device hairline.
+      borderBottomWidth: layout.hairlineWidth,
+      borderBottomColor: colors.hairline,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      flexShrink: 0,
+    },
+    text: {
+      flex: 1,
+      minWidth: 0,
+    },
+    title: {
+      ...type.rowTitle,
+      color: colors.ink,
+    },
+    subtitle: {
+      ...type.rowSubtitle,
+      color: colors.muted,
+      marginTop: 3,
+    },
+  });

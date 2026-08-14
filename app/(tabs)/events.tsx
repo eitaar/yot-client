@@ -10,7 +10,9 @@ import ScreenHeader from '@/components/ScreenHeader';
 import { fmtTimeRange, groupUpcomingByDay } from '@/lib/dates';
 import { upcoming, useEvents } from '@/store/events';
 import { useEffectiveTimeZone, useTimeFormat } from '@/store/settings';
-import { colors, fonts } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * The Events tab — "Upcoming" (design lines 43-70).
@@ -21,6 +23,8 @@ import { colors, fonts } from '@/theme/tokens';
  * layout.
  */
 export default function EventsScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const timeFormat = useTimeFormat();
   const timeZone = useEffectiveTimeZone();
@@ -79,11 +83,12 @@ export default function EventsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.canvas,
-  },
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.canvas,
+    },
   scroll: {
     flex: 1,
   },

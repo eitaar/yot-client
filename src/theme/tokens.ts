@@ -8,7 +8,7 @@
 
 /* ------------------------------------------------------------------ colors */
 
-export const colors = {
+export const lightColors = {
   /** Primary text / active states. */
   ink: '#0F0F0F',
   /** Screen background inside the device. */
@@ -54,6 +54,45 @@ export const colors = {
   /** Input border. */
   fieldBorder: '#E8E8E6',
 } as const;
+
+/**
+ * A light/dark pair is keyed identically; `Colors` is the shared shape. The
+ * dark palette brightens text, dims backgrounds, and lightens the accent hues
+ * so they stay legible on a near-black canvas.
+ */
+export type Colors = { [K in keyof typeof lightColors]: string };
+
+export const darkColors: Colors = {
+  ink: '#F2F2F0',
+  canvas: '#111113',
+  pageBg: '#0A0A0B',
+  hairline: '#232326',
+  hairlineStrong: '#2A2A2E',
+  hairlineWarm: '#26262A',
+  hairlineFaint: '#1D1D20',
+  muted: '#8A8A8F',
+  faint: '#5A5A60',
+  faintWarm: '#6A6A70',
+  chevron: '#4A4A50',
+  iconMuted: '#7A7A80',
+  body: '#B8B8BC',
+  blue: '#6B8AFF',
+  blueHover: '#8099FF',
+  green: '#34C083',
+  red: '#E86060',
+  redEvent: '#E8453C',
+  toggleOff: '#2E2E33',
+  fieldBg: '#1A1A1D',
+  fieldBorder: '#2C2C31',
+};
+
+export type ThemeName = 'light' | 'dark';
+export type ThemePreference = ThemeName | 'system';
+
+export const themes: Record<ThemeName, Colors> = {
+  light: lightColors,
+  dark: darkColors,
+};
 
 /**
  * Event colour trio. Calendar colour maps here; when a calendar has no colour
@@ -284,7 +323,6 @@ export const press = {
 } as const;
 
 const tokens = {
-  colors,
   eventColors,
   eventPalette,
   fonts,

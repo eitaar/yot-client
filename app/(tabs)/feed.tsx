@@ -24,7 +24,8 @@ import {
   type FeedLayout,
 } from '@/store/settings';
 import { useTracking } from '@/store/tracking';
-import { colors } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * The Feed tab (design lines 981-988) — one header and a segmented control.
@@ -43,6 +44,8 @@ const LAYOUTS: Record<FeedLayout, (props: FeedLayoutProps) => React.ReactElement
 };
 
 export default function FeedScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const timeFormat = useTimeFormat();
   const timeZone = useEffectiveTimeZone();
@@ -148,16 +151,17 @@ export default function FeedScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.canvas,
-    minHeight: 0,
-  },
-  modes: {
-    // design line 750: `margin: 0 20px 10px`
-    marginHorizontal: 20,
-    marginBottom: 10,
-    alignSelf: 'stretch',
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.canvas,
+      minHeight: 0,
+    },
+    modes: {
+      // design line 750: `margin: 0 20px 10px`
+      marginHorizontal: 20,
+      marginBottom: 10,
+      alignSelf: 'stretch',
+    },
+  });

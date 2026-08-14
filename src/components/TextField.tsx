@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,7 +8,9 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { colors, fonts, radii } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts, radii } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * The edit sheet's text input (design lines 1053-1073): an 11/700 uppercase
@@ -37,6 +39,8 @@ export default function TextField({
   style,
   testID,
 }: TextFieldProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [focused, setFocused] = useState(false);
 
   return (
@@ -64,36 +68,37 @@ export default function TextField({
   );
 }
 
-const styles = StyleSheet.create({
-  field: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 11,
-    fontFamily: fonts.bold,
-    color: colors.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 6,
-  },
-  input: {
-    width: '100%',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    fontSize: 15,
-    fontFamily: fonts.regular,
-    color: colors.ink,
-    borderWidth: 1.5,
-    borderColor: colors.fieldBorder,
-    borderRadius: radii.field,
-    backgroundColor: colors.fieldBg,
-  },
-  multiline: {
-    fontSize: 14,
-    lineHeight: 22,
-    textAlignVertical: 'top',
-  },
-  focused: {
-    borderColor: colors.ink,
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    field: {
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: 11,
+      fontFamily: fonts.bold,
+      color: colors.muted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: 6,
+    },
+    input: {
+      width: '100%',
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      fontSize: 15,
+      fontFamily: fonts.regular,
+      color: colors.ink,
+      borderWidth: 1.5,
+      borderColor: colors.fieldBorder,
+      borderRadius: radii.field,
+      backgroundColor: colors.fieldBg,
+    },
+    multiline: {
+      fontSize: 14,
+      lineHeight: 22,
+      textAlignVertical: 'top',
+    },
+    focused: {
+      borderColor: colors.ink,
+    },
+  });

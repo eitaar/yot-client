@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 
 import TabBar, { type TabBarItem } from '@/components/TabBar';
 import { tabIconPaths } from '@/components/icons';
-import { colors } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
 
 /**
  * The three tabs, in the design's order. Icon path data comes from
@@ -20,6 +20,7 @@ const TAB_ITEMS: readonly TabBarItem[] = [
  * activation animations, none of which the native bar can express.
  */
 export default function TabsLayout() {
+  const { colors } = useTheme();
   return (
     <Tabs
       screenOptions={{

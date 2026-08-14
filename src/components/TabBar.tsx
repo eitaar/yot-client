@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -9,7 +9,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
-import { colors, easing, fonts, layout } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { easing, fonts, layout } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * The design's bottom bar (lines 992–1005) — a plain row of icon + label, not
@@ -56,6 +58,9 @@ function TabButton({
   active: boolean;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   // `rotate` is in degrees; `scaleX` and `scale` are unitless multipliers.
   const rotate = useSharedValue(0);
   const scaleX = useSharedValue(1);
@@ -117,6 +122,9 @@ function TabButton({
 /* --------------------------------------------------------------------- bar */
 
 export default function TabBar({ items, activeKey, onSelect }: TabBarProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View accessibilityRole="tablist" style={styles.bar} testID="tab-bar">
       {items.map((item) => (
@@ -131,34 +139,35 @@ export default function TabBar({ items, activeKey, onSelect }: TabBarProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingTop: 10,
-    paddingBottom: 30,
-    borderTopWidth: layout.hairlineWidth,
-    borderTopColor: colors.hairlineStrong,
-    backgroundColor: colors.canvas,
-    flexShrink: 0,
-  },
-  button: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 4,
-    minWidth: 64,
-  },
-  label: {
-    fontSize: 10,
-    letterSpacing: 0.2,
-  },
-  labelActive: {
-    fontFamily: fonts.bold,
-    color: colors.ink,
-  },
-  labelIdle: {
-    fontFamily: fonts.medium,
-    color: colors.faint,
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    bar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      paddingTop: 10,
+      paddingBottom: 30,
+      borderTopWidth: layout.hairlineWidth,
+      borderTopColor: colors.hairlineStrong,
+      backgroundColor: colors.canvas,
+      flexShrink: 0,
+    },
+    button: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 4,
+      minWidth: 64,
+    },
+    label: {
+      fontSize: 10,
+      letterSpacing: 0.2,
+    },
+    labelActive: {
+      fontFamily: fonts.bold,
+      color: colors.ink,
+    },
+    labelIdle: {
+      fontFamily: fonts.medium,
+      color: colors.faint,
+    },
+  });

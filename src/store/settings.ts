@@ -12,6 +12,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { persistStorage } from '@/store/storage';
+import type { ThemePreference } from '@/theme/tokens';
 
 export type WeekStart = 'Mon' | 'Sun';
 export type TimeFormat = '12h' | '24h';
@@ -44,6 +45,8 @@ export interface SettingsState {
   /** Tab the app opens on. */
   defaultView: DefaultView;
   feedLayout: FeedLayout;
+  /** Light / dark / follow the device. */
+  theme: ThemePreference;
   /** Agent preferences — persisted, no backend effect yet. */
   autoSuggest: boolean;
   smartNotifs: boolean;
@@ -62,6 +65,7 @@ export interface SettingsActions {
   setTimeZone: (value: string) => void;
   setDefaultView: (value: DefaultView) => void;
   setFeedLayout: (value: FeedLayout) => void;
+  setTheme: (value: ThemePreference) => void;
   setAutoSuggest: (value: boolean) => void;
   setSmartNotifs: (value: boolean) => void;
   setOnboarded: (value: boolean) => void;
@@ -81,6 +85,7 @@ export const defaultSettings: SettingsState = {
   timeZone: deviceTimeZone(),
   defaultView: 'calendar',
   feedLayout: 'dynamic',
+  theme: 'system',
   autoSuggest: true,
   smartNotifs: false,
   onboarded: false,
@@ -101,6 +106,7 @@ export const useSettings = create<SettingsStore>()(
       setTimeZone: (timeZone) => set({ timeZone }),
       setDefaultView: (defaultView) => set({ defaultView }),
       setFeedLayout: (feedLayout) => set({ feedLayout }),
+      setTheme: (theme) => set({ theme }),
       setAutoSuggest: (autoSuggest) => set({ autoSuggest }),
       setSmartNotifs: (smartNotifs) => set({ smartNotifs }),
       setOnboarded: (onboarded) => set({ onboarded }),
@@ -128,6 +134,7 @@ export const useSettings = create<SettingsStore>()(
 export const selectWeekStart = (s: SettingsStore): WeekStart => s.weekStart;
 export const selectTimeFormat = (s: SettingsStore): TimeFormat => s.timeFormat;
 export const selectFeedLayout = (s: SettingsStore): FeedLayout => s.feedLayout;
+export const selectTheme = (s: SettingsStore): ThemePreference => s.theme;
 export const selectDefaultView = (s: SettingsStore): DefaultView => s.defaultView;
 export const selectOnboarded = (s: SettingsStore): boolean => s.onboarded;
 export const selectHydrated = (s: SettingsStore): boolean => s.hydrated;
@@ -139,6 +146,7 @@ export const selectTimeZone = (s: SettingsStore): string =>
 export const useWeekStart = (): WeekStart => useSettings(selectWeekStart);
 export const useTimeFormat = (): TimeFormat => useSettings(selectTimeFormat);
 export const useFeedLayout = (): FeedLayout => useSettings(selectFeedLayout);
+export const useThemePreference = (): ThemePreference => useSettings(selectTheme);
 export const useDefaultView = (): DefaultView => useSettings(selectDefaultView);
 export const useEffectiveTimeZone = (): string => useSettings(selectTimeZone);
 export const useSettingsHydrated = (): boolean => useSettings(selectHydrated);

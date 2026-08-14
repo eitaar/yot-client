@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,13 +7,12 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 import AppPressable from '@/components/AppPressable';
-import { colors, radii, shadows, springs, type } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { radii, shadows, springs, type } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /** Padding between the track edge and the thumb (design: `padding: 3`). */
 const TRACK_PADDING = 3;
@@ -48,6 +47,8 @@ export default function SegmentedControl<T extends string>({
   style,
   accessibilityLabel,
 }: SegmentedControlProps<T>) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [trackWidth, setTrackWidth] = useState(0);
 
   const index = Math.max(0, options.indexOf(value));
@@ -56,9 +57,7 @@ export default function SegmentedControl<T extends string>({
   // derived from the measured track so the segments divide the row evenly.
   const measuredWidth =
     optionWidth ??
-    (trackWidth > 0
-      ? (trackWidth - TRACK_PADDING * 2) / options.length
-      : 0);
+    (trackWidth > 0 ? (trackWidth - TRACK_PADDING * 2) / options.length : 0);
 
   const onTrackLayout = (e: LayoutChangeEvent) => {
     const w = e.nativeEvent.layout.width;
@@ -74,9 +73,7 @@ export default function SegmentedControl<T extends string>({
     return {
       width: measuredWidth,
       opacity: 1,
-      transform: [
-        { translateX: withSpring(index * measuredWidth, springs.bouncy) },
-      ],
+      transform: [{ translateX: withSpring(index * measuredWidth, springs.bouncy) }],
     };
   }, [measuredWidth, index]);
 
@@ -97,16 +94,10 @@ export default function SegmentedControl<T extends string>({
             onPress={() => onChange(option)}
             accessibilityRole="tab"
             accessibilityState={{ selected }}
-            style={[
-              styles.option,
-              optionWidth ? { width: optionWidth } : styles.optionFlex,
-            ]}
+            style={[styles.option, optionWidth ? { width: optionWidth } : styles.optionFlex]}
           >
             <Text
-              style={[
-                styles.label,
-                { color: selected ? colors.ink : colors.muted },
-              ]}
+              style={[styles.label, { color: selected ? colors.ink : colors.muted }]}
               numberOfLines={1}
             >
               {labelFor ? labelFor(option) : option}
@@ -118,34 +109,35 @@ export default function SegmentedControl<T extends string>({
   );
 }
 
-const styles = StyleSheet.create({
-  track: {
-    flexDirection: 'row',
-    backgroundColor: colors.hairline,
-    borderRadius: radii.track,
-    padding: TRACK_PADDING,
-    position: 'relative',
-    alignSelf: 'flex-start',
-  },
-  thumb: {
-    position: 'absolute',
-    top: TRACK_PADDING,
-    left: TRACK_PADDING,
-    bottom: TRACK_PADDING,
-    backgroundColor: colors.canvas,
-    borderRadius: radii.thumb,
-    ...shadows.thumb,
-  },
-  option: {
-    paddingVertical: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionFlex: {
-    flex: 1,
-  },
-  label: {
-    ...type.segment,
-    textAlign: 'center',
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    track: {
+      flexDirection: 'row',
+      backgroundColor: colors.hairline,
+      borderRadius: radii.track,
+      padding: TRACK_PADDING,
+      position: 'relative',
+      alignSelf: 'flex-start',
+    },
+    thumb: {
+      position: 'absolute',
+      top: TRACK_PADDING,
+      left: TRACK_PADDING,
+      bottom: TRACK_PADDING,
+      backgroundColor: colors.canvas,
+      borderRadius: radii.thumb,
+      ...shadows.thumb,
+    },
+    option: {
+      paddingVertical: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    optionFlex: {
+      flex: 1,
+    },
+    label: {
+      ...type.segment,
+      textAlign: 'center',
+    },
+  });
