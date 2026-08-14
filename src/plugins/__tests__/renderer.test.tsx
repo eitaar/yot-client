@@ -32,7 +32,7 @@ describe('renderTree', () => {
   });
 
   it('renders a flight route (origin / destination / plane)', async () => {
-    const { getByText } = await render(
+    const { getByText, toJSON } = await render(
       renderTree(
         { type: 'Route', props: { origin: '{{item.origin}}', destination: '{{item.destination}}', progress: '{{derived.progress}}' } },
         { item: { origin: 'HND', destination: 'SFO' }, derived: { progress: 0 }, color: '#0066B3', colors: lightColors },
@@ -40,6 +40,23 @@ describe('renderTree', () => {
     );
     expect(getByText('HND')).toBeTruthy();
     expect(getByText('SFO')).toBeTruthy();
+    // Default marker is the built-in plane glyph.
+    expect(JSON.stringify(toJSON())).toContain('M17.8');
+  });
+
+  it('uses a custom plane marker when props.planeSvg is set', async () => {
+    const planeSvg =
+      "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 12h16'/><path d='M13 5l7 7-7 7'/></svg>";
+    const { toJSON } = await render(
+      renderTree(
+        { type: 'Route', props: { origin: 'HND', destination: 'SFO', progress: 0.5, planeSvg } },
+        { item: {}, derived: { progress: 0.5 }, color: '#D70035' },
+      )!,
+    );
+    // The custom arrow (right-pointing) replaces the built-in plane glyph.
+    const json = JSON.stringify(toJSON());
+    expect(json).toContain('M4 12h16');
+    expect(json).not.toContain('M17.8');
   });
 
   it('renders a badge with a variant', async () => {
