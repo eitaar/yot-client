@@ -20,7 +20,9 @@ import { BackChevronIcon } from '@/components/icons';
 import { fmtTimeRange } from '@/lib/dates';
 import { useEvents } from '@/store/events';
 import { useEffectiveTimeZone, useTimeFormat } from '@/store/settings';
-import { colors, durations, easing, fonts, radii, type } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { durations, easing, fonts, radii, type } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * Event detail (design lines 1007-1049) with the edit sheet (1051-1106).
@@ -39,6 +41,8 @@ import { colors, durations, easing, fonts, radii, type } from '@/theme/tokens';
 /* -------------------------------------------------------------- metadata */
 
 function MetaRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={[styles.metaRow, !last && styles.metaHairline]}>
       <Text style={styles.metaLabel}>{label}</Text>
@@ -52,6 +56,8 @@ function MetaRow({ label, value, last }: { label: string; value: string; last?: 
 /* -------------------------------------------------------------- back link */
 
 function BackLink({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <AppPressable
       variant="none"
@@ -70,6 +76,8 @@ function BackLink({ onPress }: { onPress: () => void }) {
 /* ----------------------------------------------------------------- screen */
 
 export default function EventDetailScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const timeFormat = useTimeFormat();
@@ -212,6 +220,8 @@ function confirmDelete(onConfirm: () => void): void {
 }
 
 function EditSheet({ initial, timeFormat, topInset, onCancel, onSave, onDelete }: EditSheetProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [title, setTitle] = useState(initial.title);
   const [start, setStart] = useState(initial.start);
   const [end, setEnd] = useState(initial.end);
@@ -331,8 +341,9 @@ function EditSheet({ initial, timeFormat, topInset, onCancel, onSave, onDelete }
 
 /* ------------------------------------------------------------------ styles */
 
-const styles = StyleSheet.create({
-  root: {
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
     flex: 1,
     backgroundColor: colors.canvas,
   },

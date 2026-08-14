@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,7 +9,9 @@ import {
 } from 'react-native';
 
 import AppPressable from '@/components/AppPressable';
-import { colors, fonts, radii, type } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts, radii, type } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * A small shadcn-style UI kit built on the app's design tokens. These are
@@ -26,6 +28,7 @@ export function Card({
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { styles } = useUiKit();
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
@@ -36,6 +39,7 @@ export function CardHeader({
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { styles } = useUiKit();
   return <View style={[styles.cardHeader, style]}>{children}</View>;
 }
 
@@ -46,6 +50,7 @@ export function CardTitle({
   children?: ReactNode;
   style?: StyleProp<TextStyle>;
 }) {
+  const { styles } = useUiKit();
   return (
     <Text style={[styles.cardTitle, style]} numberOfLines={1}>
       {children}
@@ -60,6 +65,7 @@ export function CardContent({
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { styles } = useUiKit();
   return <View style={[styles.cardContent, style]}>{children}</View>;
 }
 
@@ -76,6 +82,7 @@ export function Badge({
   variant?: BadgeVariant;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { styles, badgeVariant, badgeTextVariant } = useUiKit();
   return (
     <View style={[styles.badge, badgeVariant[variant], style]}>
       <Text style={[styles.badgeText, badgeTextVariant[variant]]}>{children}</Text>
@@ -103,6 +110,7 @@ export function Button({
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { styles, buttonVariant, buttonTextVariant } = useUiKit();
   return (
     <AppPressable
       variant="button"
@@ -127,17 +135,19 @@ export function Button({
 /** `value` is 0..1, matching the plugin derive `progress`. */
 export function Progress({
   value = 0,
-  color = colors.ink,
+  color,
   style,
 }: {
   value?: number;
   color?: string;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { colors, styles } = useUiKit();
+  const fill = color ?? colors.ink;
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100);
   return (
     <View style={[styles.progressTrack, style]}>
-      <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: color }]} />
+      <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: fill }]} />
     </View>
   );
 }
@@ -145,113 +155,133 @@ export function Progress({
 /* --------------------------------------------------------------- Separator */
 
 export function Separator({
-  color = colors.hairline,
+  color,
   style,
 }: {
   color?: string;
   style?: StyleProp<ViewStyle>;
 }) {
-  return <View style={[{ height: 1, backgroundColor: color, marginVertical: 12 }, style]} />;
+  const { colors } = useUiKit();
+  const line = color ?? colors.hairline;
+  return <View style={[{ height: 1, backgroundColor: line, marginVertical: 12 }, style]} />;
+}
+
+/* --------------------------------------------------------------- theme hook */
+
+function useUiKit() {
+  const { colors } = useTheme();
+  return useMemo(
+    () => ({
+      colors,
+      styles: createStyles(colors),
+      badgeVariant: badgeVariants(colors),
+      badgeTextVariant: badgeTextVariants(colors),
+      buttonVariant: buttonVariants(colors),
+      buttonTextVariant: buttonTextVariants(colors),
+    }),
+    [colors],
+  );
 }
 
 /* ------------------------------------------------------------------ styles */
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.canvas,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.hairlineStrong,
-    overflow: 'hidden',
-  },
-  cardHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  cardTitle: {
-    ...type.rowTitle,
-    color: colors.ink,
-  },
-  cardContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    gap: 6,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontFamily: fonts.semibold,
-  },
-  button: {
-    paddingHorizontal: 16,
-    borderRadius: radii.field,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  buttonText: {
-    fontFamily: fonts.semibold,
-    fontSize: 14,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  progressTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.hairlineStrong,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.canvas,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.hairlineStrong,
+      overflow: 'hidden',
+    },
+    cardHeader: {
+      paddingHorizontal: 16,
+      paddingTop: 14,
+      paddingBottom: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    cardTitle: {
+      ...type.rowTitle,
+      color: colors.ink,
+    },
+    cardContent: {
+      paddingHorizontal: 16,
+      paddingBottom: 14,
+      gap: 6,
+    },
+    badge: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 999,
+      alignSelf: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    badgeText: {
+      fontSize: 12,
+      fontFamily: fonts.semibold,
+    },
+    button: {
+      paddingHorizontal: 16,
+      borderRadius: radii.field,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: 8,
+    },
+    buttonText: {
+      fontFamily: fonts.semibold,
+      fontSize: 14,
+    },
+    buttonDisabled: {
+      opacity: 0.5,
+    },
+    progressTrack: {
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.hairlineStrong,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      borderRadius: 3,
+    },
+  });
 
-const badgeVariant: Record<BadgeVariant, ViewStyle> = {
+const badgeVariants = (colors: Colors): Record<BadgeVariant, ViewStyle> => ({
   default: { backgroundColor: colors.blue },
   secondary: { backgroundColor: colors.hairline },
   outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.hairlineStrong },
   destructive: { backgroundColor: colors.red },
   success: { backgroundColor: colors.green },
-};
+});
 
-const badgeTextVariant: Record<BadgeVariant, TextStyle> = {
+const badgeTextVariants = (colors: Colors): Record<BadgeVariant, TextStyle> => ({
   default: { color: '#FFFFFF' },
   secondary: { color: colors.ink },
   outline: { color: colors.ink },
   destructive: { color: '#FFFFFF' },
   success: { color: '#FFFFFF' },
-};
+});
 
-const buttonVariant: Record<ButtonVariant, ViewStyle> = {
+const buttonVariants = (colors: Colors): Record<ButtonVariant, ViewStyle> => ({
   default: { backgroundColor: colors.ink },
   secondary: { backgroundColor: colors.hairline },
   ghost: { backgroundColor: 'transparent' },
   outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.hairlineStrong },
   destructive: { backgroundColor: colors.red },
-};
+});
 
-const buttonTextVariant: Record<ButtonVariant, TextStyle> = {
+const buttonTextVariants = (colors: Colors): Record<ButtonVariant, TextStyle> => ({
   default: { color: '#FFFFFF' },
   secondary: { color: colors.ink },
   ghost: { color: colors.ink },
   outline: { color: colors.ink },
   destructive: { color: '#FFFFFF' },
-};
+});
 
 const buttonSize: Record<ButtonSize, ViewStyle> = {
   sm: { paddingVertical: 6, minHeight: 32 },

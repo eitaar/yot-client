@@ -9,6 +9,7 @@ import { applyProgress } from '@/plugins/hooks';
 import { renderTree } from '@/plugins/renderer';
 import { TrackingPluginSpecSchema } from '@/plugins/schema';
 import type { TrackingItem } from '@/store/tracking';
+import { lightColors } from '@/theme/tokens';
 
 const NOW = new Date('2026-05-20T12:00:00');
 
@@ -74,6 +75,7 @@ describe('f1-2026 plugin', () => {
       item: itemContext(monaco),
       derived: derived as unknown as Record<string, unknown>,
       color: '#E10600',
+      colors: lightColors,
     };
     const { getByText } = await render(renderTree(f12026Spec.listRow!, ctx)!);
     expect(getByText('6')).toBeTruthy();

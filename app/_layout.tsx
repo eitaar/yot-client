@@ -20,7 +20,8 @@ import { clearSession, loadSession } from '@/api/session';
 import { useLiveSync } from '@/hooks/useLiveSync';
 import { useEvents } from '@/store/events';
 import { type DefaultView, useSettings } from '@/store/settings';
-import { colors } from '@/theme/tokens';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/context';
 
 // Hold the splash screen until the fonts are ready, so the first frame the
 // user sees is already in Plus Jakarta Sans rather than the system face.
@@ -34,6 +35,16 @@ const VIEW_ROUTE: Record<DefaultView, string> = {
 };
 
 export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <Root />
+    </ThemeProvider>
+  );
+}
+
+function Root() {
+  const { theme, colors } = useTheme();
+
   const [fontsLoaded, fontError] = useFonts({
     PlusJakartaSans_300Light,
     PlusJakartaSans_400Regular,
@@ -161,9 +172,9 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <GestureHandlerRootView style={styles.root}>
+    <GestureHandlerRootView style={[styles.root, { backgroundColor: colors.canvas }]}>
       <SafeAreaProvider>
-        <StatusBar style="dark" />
+        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
         <Stack
           screenOptions={{
             headerShown: false,
@@ -188,6 +199,5 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.canvas,
   },
 });

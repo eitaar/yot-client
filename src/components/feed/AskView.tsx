@@ -23,7 +23,9 @@ import AppPressable from '@/components/AppPressable';
 import { SendIcon } from '@/components/icons';
 import { fmtClock, type TimeFormat } from '@/lib/dates';
 import { answer, buildInsight, type AskAction } from '@/lib/askEngine';
-import { colors, fonts, radii } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { fonts, radii } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * The Ask pane (design lines 761-816).
@@ -61,6 +63,8 @@ export interface AskViewProps {
 
 /** `dotAppear 0.6s ease infinite alternate` with a 0 / .15 / .3s stagger. */
 function LoadingDot({ delay }: { delay: number }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scale = useSharedValue(0);
 
   useEffect(() => {
@@ -75,6 +79,8 @@ function LoadingDot({ delay }: { delay: number }) {
 /* ------------------------------------------------------------------- view */
 
 export default function AskView({ events, timeFormat, timeZone, onOpenEvent }: AskViewProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AskState | null>(null);
@@ -336,8 +342,9 @@ export default function AskView({ events, timeFormat, timeZone, onOpenEvent }: A
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
     flex: 1,
     minHeight: 0,
   },
@@ -386,7 +393,7 @@ const styles = StyleSheet.create({
   answerText: {
     fontSize: 14,
     fontFamily: fonts.regular,
-    color: '#333333',
+    color: colors.body,
     // design: `line-height: 1.65`
     lineHeight: 23,
     marginBottom: 12,
@@ -429,7 +436,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     // design line 800 — this border tone appears nowhere else.
-    borderColor: '#E0E0DE',
+    borderColor: colors.hairlineStrong,
   },
   actionLabel: {
     fontSize: 12,
@@ -510,7 +517,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
     paddingVertical: 5,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.canvas,
     shadowColor: '#000000',
     shadowOpacity: 0.12,
     shadowRadius: 10,

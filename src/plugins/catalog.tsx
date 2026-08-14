@@ -17,7 +17,8 @@ import {
   type ButtonSize,
   type ButtonVariant,
 } from '@/components/ui';
-import { colors, fonts } from '@/theme/tokens';
+import { fonts } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 export interface ElementProps {
   value?: string;
@@ -36,6 +37,8 @@ export type CatalogEntry = (p: ElementProps) => React.ReactElement | null;
  * Composition: layout primitives (Row/Column/…), text, the shadcn-style UI kit
  * (Card/Badge/Button/Progress/Separator), reused app primitives (ListRow/
  * SectionLabel), and a couple of domain components (Route, ProgressBar).
+ *
+ * The registry is built per palette so every entry follows the active theme.
  */
 export const catalog: Record<string, CatalogEntry> = {
   /* ------------------------------------------------------------ layout */
@@ -132,22 +135,35 @@ export const catalog: Record<string, CatalogEntry> = {
               <PlaneIcon size={16} color={accent} strokeWidth={1.8} />
             )}
           </View>
+          <Text style={{ fontSize: 17, fontFamily: fonts.bold, color: colors.ink }}>{destination}</Text>
         </View>
-        <Text style={{ fontSize: 17, fontFamily: fonts.bold, color: colors.ink }}>{destination}</Text>
-      </View>
-    );
-  },
+      );
+    },
 
-  Checkbox: ({ props }) => {
-    const checked = Boolean(props?.checked);
-    return (
-      <View style={{ width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, borderColor: colors.muted, backgroundColor: checked ? colors.ink : 'transparent' }} />
-    );
-  },
-};
+    Checkbox: ({ props }) => {
+      const checked = Boolean(props?.checked);
+      return (
+        <View style={{ width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, borderColor: colors.muted, backgroundColor: checked ? colors.ink : 'transparent' }} />
+      );
+    },
+  };
+}
 
-export function resolveComponent(type: string): CatalogEntry {
-  const c = catalog[type];
+let cache: { colors: Colors; catalog: Record<string, CatalogEntry> } | null = null;
+
+/**
+ * Memoised by palette reference — `colors` is stable per theme, so each theme
+ * builds the registry once and reuses the same component identities across
+ * renders (avoids remounting plugin subtrees on every state change).
+ */
+export function makeCatalog(colors: Colors): Record<string, CatalogEntry> {
+  if (cache && cache.colors === colors) return cache.catalog;
+  cache = { colors, catalog: buildCatalog(colors) };
+  return cache.catalog;
+}
+
+export function resolveComponent(type: string, colors: Colors): CatalogEntry {
+  const c = makeCatalog(colors)[type];
   if (!c) throw new Error(`Unknown catalog component: ${type}`);
   return c;
 }

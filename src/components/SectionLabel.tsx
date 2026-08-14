@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 
-import { colors, type } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { type } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 export interface SectionLabelProps {
   children: string;
@@ -12,6 +15,9 @@ export interface SectionLabelProps {
  * above each block of settings rows.
  */
 export default function SectionLabel({ children, style }: SectionLabelProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Text accessibilityRole="header" style={[styles.label, style]}>
       {children}
@@ -19,9 +25,10 @@ export default function SectionLabel({ children, style }: SectionLabelProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  label: {
-    ...type.sectionLabel,
-    color: colors.faint,
-  },
-});
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    label: {
+      ...type.sectionLabel,
+      color: colors.faint,
+    },
+  });

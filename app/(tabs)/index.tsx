@@ -48,7 +48,9 @@ import {
 } from '@/lib/layoutDay';
 import { selectSortedEvents, useDayEvents, useEvents } from '@/store/events';
 import { useEffectiveTimeZone, useTimeFormat, useWeekStart } from '@/store/settings';
-import { colors, easing, fonts, layout } from '@/theme/tokens';
+import { useTheme } from '@/theme/context';
+import { easing, fonts, layout } from '@/theme/tokens';
+import type { Colors } from '@/theme/tokens';
 
 /**
  * The Calendar tab — design lines 320–490.
@@ -113,6 +115,8 @@ const DOT_POP_MS = 300;
 const DOT_POP_STAGGER_MS = 50;
 
 function Dots({ colors: dots, pop = false }: { colors: string[] | undefined; pop?: boolean }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   if (!dots || dots.length === 0) return <View style={styles.dotSpacer} />;
   return (
     <View style={styles.dotRow}>
@@ -178,6 +182,8 @@ function TimelineBlock({
   timeFormat: '12h' | '24h';
   timeZone?: string;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const geo = geometryFor(block, canvasWidth);
   const dim = block.isPast ? styles.past : null;
   const timeLabel = geo.narrow
@@ -250,6 +256,8 @@ function TimelineBlock({
 /* ------------------------------------------------------------------ screen */
 
 export default function CalendarScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const weekStart = useWeekStart();
   const timeFormat = useTimeFormat();
@@ -626,8 +634,9 @@ export default function CalendarScreen() {
 
 /* ------------------------------------------------------------------ styles */
 
-const styles = StyleSheet.create({
-  root: {
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    root: {
     flex: 1,
     backgroundColor: colors.canvas,
   },
