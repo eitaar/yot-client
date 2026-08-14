@@ -68,6 +68,8 @@ function Row({
   added: boolean;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.row} testID={`plugin-picker-${id}`}>
       <View style={styles.rowText}>
