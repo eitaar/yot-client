@@ -119,13 +119,18 @@ export const catalog: Record<string, CatalogEntry> = {
     const destination = String(props?.destination ?? '');
     const progress = Math.min(1, Math.max(0, Number(props?.progress) || 0));
     const accent = (color as string) ?? colors.ink;
+    const planeSvg = props?.planeSvg as string | undefined;
     return (
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Text style={{ fontSize: 17, fontFamily: fonts.bold, color: colors.ink }}>{origin}</Text>
         <View style={{ flex: 1, height: 2, backgroundColor: colors.hairlineStrong, borderRadius: 1 }}>
           <View style={{ height: '100%', width: `${progress * 100}%`, backgroundColor: accent, borderRadius: 1 }} />
           <View style={{ position: 'absolute', left: `${progress * 100}%`, top: -7, marginLeft: -8 }}>
-            <PlaneIcon size={16} color={accent} strokeWidth={1.8} />
+            {planeSvg ? (
+              <SvgXml xml={planeSvg} width={16} height={16} color={accent} />
+            ) : (
+              <PlaneIcon size={16} color={accent} strokeWidth={1.8} />
+            )}
           </View>
         </View>
         <Text style={{ fontSize: 17, fontFamily: fonts.bold, color: colors.ink }}>{destination}</Text>
