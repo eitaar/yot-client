@@ -95,12 +95,6 @@ export const themes: Record<ThemeName, Colors> = {
 };
 
 /**
- * Back-compat alias — removed once every component reads its palette through
- * `useTheme()` instead of importing `colors` directly.
- */
-export const colors = lightColors;
-
-/**
  * Event colour trio. Calendar colour maps here; when a calendar has no colour
  * the event id is hashed into this palette so the choice is stable per event.
  */
@@ -329,7 +323,6 @@ export const press = {
 } as const;
 
 const tokens = {
-  colors,
   eventColors,
   eventPalette,
   fonts,

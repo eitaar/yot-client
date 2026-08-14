@@ -54,7 +54,6 @@ describe('design tokens', () => {
   });
 
   it('has a default export bundling every group', () => {
-    expect(tokens.colors).toBe(lightColors);
     expect(tokens.fonts).toBe(fonts);
   });
 });

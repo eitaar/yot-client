@@ -46,7 +46,7 @@ import {
 } from '@/store/settings';
 import { useTheme } from '@/theme/context';
 import { durations, easing, fonts, layout, radii, type } from '@/theme/tokens';
-import type { Colors } from '@/theme/tokens';
+import type { Colors, ThemePreference } from '@/theme/tokens';
 
 /**
  * Settings (design lines 1218-1261).
@@ -386,6 +386,7 @@ export default function SettingsScreen() {
   const timeZone = useSettings((s) => s.timeZone);
   const defaultView = useSettings((s) => s.defaultView);
   const feedLayout = useSettings((s) => s.feedLayout);
+  const theme = useSettings((s) => s.theme);
   const autoSuggest = useSettings((s) => s.autoSuggest);
   const smartNotifs = useSettings((s) => s.smartNotifs);
 
@@ -395,6 +396,7 @@ export default function SettingsScreen() {
   const setTimeZone = useSettings((s) => s.setTimeZone);
   const setDefaultView = useSettings((s) => s.setDefaultView);
   const setFeedLayout = useSettings((s) => s.setFeedLayout);
+  const setTheme = useSettings((s) => s.setTheme);
   const setAutoSuggest = useSettings((s) => s.setAutoSuggest);
   const setSmartNotifs = useSettings((s) => s.setSmartNotifs);
 
@@ -520,6 +522,21 @@ export default function SettingsScreen() {
               optionWidth={SEG_WIDTH}
               onChange={setWeekStart}
               accessibilityLabel="Start week on"
+            />
+          }
+        />
+        <SettingsRow
+          label="Theme"
+          delay={STAGGER_MS * 2}
+          testID="row-theme"
+          right={
+            <SegmentedControl<ThemePreference>
+              options={['light', 'dark', 'system']}
+              value={theme}
+              labelFor={(v) => v.charAt(0).toUpperCase() + v.slice(1)}
+              optionWidth={SEG_WIDTH_TZ}
+              onChange={setTheme}
+              accessibilityLabel="Theme"
             />
           }
         />
