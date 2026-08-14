@@ -50,7 +50,7 @@ describe('renderTree', () => {
     const { toJSON } = await render(
       renderTree(
         { type: 'Route', props: { origin: 'HND', destination: 'SFO', progress: 0.5, planeSvg } },
-        { item: {}, derived: { progress: 0.5 }, color: '#D70035' },
+        { item: {}, derived: { progress: 0.5 }, color: '#D70035', colors: lightColors },
       )!,
     );
     // The custom arrow (right-pointing) replaces the built-in plane glyph.
